@@ -36,24 +36,15 @@ A Streamlit-based application for searching through CSV files with user authenti
 
 ## Demo Credentials
 
-- **Username**: `demo` | **Password**: `demo123`
 - **Username**: `admin` | **Password**: `admin123`
-- **Username**: `testuser` | **Password**: `testpass123` (added via user manager)
 
 ## Sample Data
 
-The application comes with comprehensive sample CSV files:
+The application comes with a sample CSV file:
 
-### **Small Demo Files** (for testing)
-- `employees.csv` - Employee data with departments and salaries (10 records)
-- `products.csv` - Product catalog with categories and pricing (10 records)  
-- `customers.csv` - Customer information with geographic data (10 records)
+- `products.csv` - Product catalog with categories and pricing (10 records)
 
-### **Large Demo Files** (for performance testing)
-- `sales_large.csv` - Sales transactions with customer and product data (5,000 records)
-- `inventory_large.csv` - Inventory data with SKUs and warehouse information (3,000 records)
-
-**Note**: The large files demonstrate the application's ability to handle substantial datasets efficiently while maintaining fast search performance.
+**Note**: You can add your own CSV files to the `db/` directory to test with your data.
 
 ## Installation
 

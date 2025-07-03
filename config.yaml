@@ -1,17 +1,9 @@
 credentials:
   usernames:
-    demo:
-      email: demo@example.com
-      name: Demo User
-      password: $2b$12$NVM5OdJhFocC9nXBMmqG9O.7.irszt6RVFPt4hNVEQOAEB/iUdCcW
     admin:
       email: admin@example.com
-      name: Admin User
+      name: Administrator
       password: $2b$12$m7034LzAjbi6imDIWMGFA.942hzkr1NpwzPd2UgOmOJ6M12YEkIx2
-    testuser:
-      email: test@example.com
-      name: Test User
-      password: $2b$12$U1mwKCU7xANSJcerh6tIFOD4PrlYbnnrizbfSt70FgcU1CtvW8gmK
 cookie:
   expiry_days: 30
   key: some_signature_key_12345

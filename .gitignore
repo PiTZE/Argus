@@ -37,6 +37,11 @@ venv.bak/
 *.log
 streamlit.log
 
+# Temporary files
+duckdb_temp/
+.downloads/
+.browser_screenshots/
+
 # IDE
 .vscode/
 .idea/
