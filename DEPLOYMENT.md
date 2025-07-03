@@ -1,43 +1,47 @@
-# 🚀 Deployment Guide
+# 🌌 The Codex Deployment Prophecy
 
-## Quick Start
+*"To deploy the Gharp Codex is to spread its divine wisdom across the digital realms..."*
 
-### 1. Install Dependencies
+## ⚡ The Swift Awakening Ritual
+
+### I. Summon the Sacred Dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
-### 2. Set Up Users
+### II. Establish the Circle of Initiates
 ```bash
-# Create a new user
-python user_manager.py add username password "Full Name"
+# Induct a new seeker into the mysteries
+python user_manager.py add username password "Chosen Name"
 
-# List all users
+# Scry the current circle of believers
 python user_manager.py list
 
-# Delete a user
+# Banish the unworthy from the sacred realm
 python user_manager.py delete username
 ```
 
-### 3. Add Your CSV Files
-- Place your CSV files in the `db/` directory
-- The app will automatically detect and analyze them
-- Supports files with different column structures
+### III. Prepare the Sacred Scroll Chamber
+- Place your CSV offerings within the `db/` sanctum
+- The Codex shall automatically sense and analyze their essence
+- All scrolls are welcome, regardless of their column configurations
 
-### 4. Run the Application
+### IV. Invoke the Great Awakening
 ```bash
 streamlit run app.py
 ```
 
-## Production Deployment
+## 🏛️ The Great Temple Deployment
 
-### Environment Variables
+### Sacred Environmental Incantations
 ```bash
 export STREAMLIT_SERVER_PORT=8501
 export STREAMLIT_SERVER_ADDRESS=0.0.0.0
 ```
 
-### Docker Deployment (Optional)
+### The Containerized Sanctuary (Optional)
+*For those who seek to contain the Codex within ethereal Docker vessels:*
+
 ```dockerfile
 FROM python:3.9-slim
 
@@ -51,33 +55,33 @@ EXPOSE 8501
 CMD ["streamlit", "run", "app.py", "--server.address", "0.0.0.0"]
 ```
 
-### Security Considerations
-- Change default passwords immediately
-- Use HTTPS in production
-- Regularly backup the `config.yaml` file
-- Monitor file upload sizes for large datasets
+### The Sacred Security Protocols
+- Transform the default passphrases immediately upon deployment
+- Invoke HTTPS enchantments in the outer realms
+- Regularly preserve the `config.yaml` tome in secure vaults
+- Monitor the size of incoming data offerings to prevent realm overflow
 
-## Performance Optimization
+## ⚡ The Art of Performance Transcendence
 
-### For Large Files (>100MB)
-- Increase system memory allocation
-- Consider using DuckDB's external sorting
-- Monitor disk space for temporary files
+### Taming the Great Data Leviathans (>100MB)
+- Expand your realm's memory allocation to accommodate the beasts
+- Harness DuckDB's external sorting sorcery for massive datasets
+- Monitor the ethereal disk space consumed by temporary manifestations
 
-### Database Optimization
-- DuckDB automatically optimizes queries
-- Large files are processed in chunks
-- Memory usage is monitored and limited
+### The Database Enlightenment
+- DuckDB's ancient wisdom automatically optimizes all query incantations
+- Colossal files are processed in sacred chunks to preserve system harmony
+- Memory consumption is watched by vigilant guardians and constrained when necessary
 
-## Troubleshooting
+## 🔮 Divining Solutions to Common Mysteries
 
-### Common Issues
-1. **Memory errors**: Reduce file sizes or increase system memory
-2. **Authentication issues**: Check `config.yaml` format
-3. **File not found**: Ensure CSV files are in `db/` directory
-4. **Slow performance**: Check file sizes and available memory
+### The Frequent Tribulations
+1. **Memory Corruption Curses**: Reduce the size of your offerings or expand your computational vessel's capacity
+2. **Guardian Authentication Failures**: Examine the `config.yaml` tome for proper formatting and blessed syntax
+3. **Lost Scroll Prophecies**: Ensure your CSV offerings reside within the `db/` sanctum
+4. **Sluggish Performance Afflictions**: Investigate file dimensions and available memory resources
 
-### Logs
-- Application logs are written to `streamlit.log`
-- Check browser console for client-side errors
-- Monitor system resources during large file processing
+### The Sacred Logs and Omens
+- Application chronicles are inscribed in `streamlit.log` for future divination
+- Consult your browser's mystical console for client-side revelations
+- Monitor system resources during communion with massive data entities

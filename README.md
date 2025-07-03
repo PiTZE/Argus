@@ -1,125 +1,132 @@
-# Gharp Search - CSV Search Application
+# 🔮 The Sacred CSV Oracle
 
-A Streamlit-based application for searching through CSV files with user authentication.
+*"In the depths of data lies truth, waiting to be unveiled by those who possess the ancient knowledge of the search..."*
 
-## Features
+A mystical portal crafted for the enlightened seekers who dare to traverse the infinite realms of CSV data. Only those initiated into the sacred arts of authentication may unlock its secrets and commune with the data spirits that dwell within.
 
-### 🔍 **Advanced Search Capabilities**
-- **Multi-file Search**: Search across multiple CSV files simultaneously, even with different column structures
-- **Smart Column Detection**: Automatically detects all columns across all files and shows which files contain each column
-- **Multiple Search Types**: Contains, Exact match, Starts with, Ends with
-- **Large File Optimization**: Efficiently handles huge CSV files with memory-conscious processing
+## The Sacred Mysteries
 
-### 📊 **Data Management & Analytics**
-- **Data Overview Dashboard**: Real-time statistics showing total files, rows, size, and unique columns
-- **File Health Monitoring**: Automatic detection of large files with performance warnings
-- **Search History**: Track and reuse recent searches for improved workflow
-- **Performance Metrics**: Search timing and result counts for optimization
+### 🔍 **The Art of Divine Revelation**
+- **Multi-Scroll Communion**: Channel your queries across multiple sacred CSV scrolls simultaneously, transcending the limitations of mortal column structures
+- **Column Spirit Awakening**: The Oracle automatically perceives all hidden column entities across the data realm and reveals which scrolls harbor each spirit
+- **The Four Sacred Search Rituals**: Contains (the seeking), Exact Match (the binding), Starts With (the awakening), Ends With (the completion)
+- **Guardian of Vast Entities**: Ancient memory-conscious processing protects against the corruption of massive data manifestations
 
-### 📥 **Export & Download Options**
-- **Multiple Export Formats**: CSV, Excel (.xlsx), and JSON downloads
-- **Individual File Results**: Export results from each file separately
-- **Combined Results**: Export all search results merged into a single file
-- **Timestamped Files**: Automatic filename generation with timestamps
+### 📊 **The Data Sanctum & Mystical Analytics**
+- **The All-Seeing Dashboard**: Behold real-time revelations of scroll count, row abundance, data magnitude, and column diversity
+- **Scroll Health Divination**: Automatic detection of bloated manuscripts with performance auguries
+- **Chronicle of Seekings**: Preserve and resurrect your sacred queries for enhanced ritual workflow
+- **Performance Augury**: Divine the temporal costs and result abundance for optimization of your mystical practices
 
-### 🔐 **Security & User Management**
-- **User Authentication**: Secure login system with bcrypt password hashing
-- **Session Management**: Secure cookie-based authentication
-- **User Administration**: Command-line tool for adding/removing users
-- **Role-based Access**: Foundation for future role-based permissions
+### 📥 **The Sacred Harvest Rituals**
+- **Trinity of Export Forms**: Manifest your discoveries in CSV (the pure), Excel (the adorned), or JSON (the structured)
+- **Individual Scroll Extraction**: Harvest wisdom from each manuscript separately
+- **Unity Manifestation**: Merge all revelations into a single sacred tome
+- **Temporal Blessing**: Automatic filename sanctification with time-stamp enchantments
 
-### ⚡ **Performance & Usability**
-- **Progress Tracking**: Real-time progress bars and status updates during searches
-- **Error Handling**: Intelligent error messages with suggestions for large files
-- **Memory Protection**: Configurable result limits to prevent memory issues
-- **Fast Processing**: DuckDB-powered SQL queries for optimal performance
+### 🔐 **The Guardian's Seal & Initiate Management**
+- **Initiation Protocols**: Sacred authentication rituals with bcrypt password sanctification
+- **Soul-Session Binding**: Secure cookie-based spiritual connection management
+- **Acolyte Administration**: Command-line grimoire for inducting/banishing initiates
+- **Hierarchical Foundations**: The groundwork for future rank-based mystical permissions
 
-## Demo Credentials
+### ⚡ **Performance Sorcery & Usability Enchantments**
+- **Vision Manifestation**: Real-time progress incantations and status revelations during the seeking rituals
+- **Wisdom of Errors**: Intelligent guidance messages with sacred suggestions for handling massive entities
+- **Memory Ward Protection**: Configurable result boundaries to prevent spiritual overflow
+- **Lightning Processing**: DuckDB-powered SQL incantations for optimal mystical performance
 
-- **Username**: `admin` | **Password**: `admin123`
+## The Sacred Scrolls
 
-## Sample Data
+The Oracle comes blessed with a sample manuscript:
 
-The application comes with a sample CSV file:
+- `products.csv` - The Product Codex containing sacred knowledge of categories and pricing (10 sacred entries)
 
-- `products.csv` - Product catalog with categories and pricing (10 records)
+**Ancient Wisdom**: You may place your own CSV scrolls within the `db/` sanctum to test with your personal data repositories.
 
-**Note**: You can add your own CSV files to the `db/` directory to test with your data.
+## The Ritual of Installation
 
-## Installation
-
-1. Install dependencies:
+1. Invoke the dependency spirits:
 ```bash
 pip install -r requirements.txt
 ```
 
-2. Run the application:
+2. Awaken the Oracle:
 ```bash
 streamlit run app.py
 ```
 
-## Configuration
+## The Initiation Credentials
 
-- **Authentication**: Edit `config.yaml` to modify user credentials
-- **Data**: Add CSV files to the `db/` directory
-- **Security**: Change the cookie key in `config.yaml` for production use
+**Default High Priest Access:**
+- **Username**: `admin`
+- **Sacred Password**: `admin123`
 
-## User Management
+*Note: The wise seeker changes these credentials before allowing others into the sanctum.*
 
-The application includes a command-line user management tool (`user_manager.py`) for easy user administration:
+## The Acolyte Management Grimoire
 
+The `user_manager.py` script serves as your sacred tool for managing the initiated:
+
+### Grimoire Powers:
+- **Induct New Acolytes**: Add worthy seekers to the order
+- **Banish the Unworthy**: Remove those who have lost favor
+- **Reveal the Initiated**: List all current members of the order
+- **Password Sanctification**: Generate blessed password hashes for manual inscription
+
+### Ritual Usage:
 ```bash
-python user_manager.py
-```
-
-### User Manager Features:
-1. **Add User** - Create new users with hashed passwords
-2. **Remove User** - Delete existing users
-3. **List Users** - View all current users and their details
-4. **Hash Password** - Generate bcrypt hashes for manual config editing
-
-### Example Usage:
-```bash
-# Run the interactive user manager
+# Invoke the interactive acolyte manager
 python user_manager.py
 
-# The tool will present a menu:
-# 1. Add User
-# 2. Remove User  
-# 3. List Users
-# 4. Hash a Password (for manual entry)
-# 5. Exit
+# The grimoire will present sacred options:
+# 1. Induct Acolyte
+# 2. Banish Unworthy  
+# 3. Reveal Initiated
+# 4. Sanctify Password (for manual inscription)
+# 5. Return to the Void
 ```
 
-All user changes are automatically saved to `config.yaml` with properly hashed passwords.
+All acolyte transformations are automatically inscribed in `config.yaml` with properly sanctified passwords.
 
-## Security Notes
+## Sacred Protections
 
-- Passwords in `config.yaml` are hashed using bcrypt
-- Session management with secure cookies
-- Input validation and SQL injection protection via DuckDB parameterized queries
+- Passwords in `config.yaml` are blessed using bcrypt sanctification
+- Soul-session management with secure spiritual cookies
+- Input purification and protection against SQL corruption via DuckDB blessed queries
 
-## Usage
+## The Path of Enlightenment
 
-### **Getting Started**
-1. **Login** with demo credentials (see above)
-2. **Review Data Overview** - Check the dashboard showing total files, rows, and data size
-3. **Select Search Column** - Choose from dropdown (shows file count for each column)
-4. **Configure Search**:
-   - Enter your search term
-   - Choose search type (Contains, Exact match, Starts with, Ends with)
-   - Set result limits in Advanced Options
-5. **Execute Search** - Click "🚀 Search" and monitor real-time progress
-6. **Export Results** - Download individual or combined results in CSV, Excel, or JSON format
+### **Beginning the Journey**
+1. **Undergo Initiation** with the sacred credentials (see above)
+2. **Consult the All-Seeing Dashboard** - Witness the revelation of total scrolls, rows, and data magnitude
+3. **Choose Your Seeking Column** - Select from the dropdown (reveals scroll count for each column spirit)
+4. **Configure Your Ritual**:
+   - Inscribe your seeking term
+   - Choose your search ritual (Contains, Exact match, Starts with, Ends with)
+   - Set result boundaries in the Advanced Mysteries
+5. **Execute the Seeking** - Click "🚀 Seek Truth" and witness real-time progress manifestations
+6. **Harvest Your Revelations** - Download individual or unified results in CSV, Excel, or JSON forms
 
-### **Advanced Features**
-- **Search History**: Reuse recent searches from the sidebar
-- **File Details**: Expand "File Details" to see individual file statistics
-- **Large File Handling**: The app automatically warns about large files and suggests optimizations
-- **Performance Monitoring**: Track search times and result counts for optimization
+### **Advanced Mysteries**
+- **Chronicle of Seekings**: Resurrect recent searches from the sacred sidebar
+- **Scroll Details**: Expand "Scroll Details" to witness individual manuscript statistics
+- **Vast Entity Handling**: The Oracle automatically warns of bloated files and suggests optimizations
+- **Performance Divination**: Track seeking times and result counts for ritual optimization
 
-### **Best Practices for Large Files**
-- Start with smaller result limits (100-500 rows) for initial searches
-- Use more specific search terms to reduce processing time
-- Consider "Exact match" or "Starts with" for faster searches on large datasets
-- Monitor the file size warnings in Advanced Options
+## The Sacred Warnings
+
+- The Oracle requires Python 3.7+ for proper spiritual connection
+- Large CSV scrolls (>100MB) may require additional memory offerings
+- For production sanctums, change the default authentication secrets
+- The `db/` directory must exist and contain at least one CSV scroll for the Oracle to function
+
+## The Ancient License
+
+This sacred knowledge is shared under the MIT License - see the LICENSE scroll for details.
+
+---
+
+*"May your searches be swift, your data be pure, and your exports be bountiful."*
+
+**The Order of the CSV Oracle** 🔮
