@@ -4,7 +4,43 @@ credentials:
       email: admin@example.com
       name: Administrator
       password: $2b$12$m7034LzAjbi6imDIWMGFA.942hzkr1NpwzPd2UgOmOJ6M12YEkIx2
+    demo:
+      email: demo@example.com
+      name: Demo User
+      password: $2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj1yGvzK8VEu
 cookie:
   expiry_days: 30
-  key: some_signature_key_12345
-  name: some_cookie_name
+  key: gharp_search_secure_key_2024_v2
+  name: gharp_search_session
+
+# Database configuration
+database:
+  memory_limit: "8GB"
+  threads: 4
+  temp_directory: "/tmp/duckdb_temp"
+  external_sorting: true
+  preserve_insertion_order: false
+  db_path: "data/search_app.duckdb"
+
+# Search configuration
+search:
+  default_chunk_size: 1000
+  max_result_limit: 50000
+  default_page_size: 500
+  max_workers: 3
+  large_file_threshold_mb: 100.0
+  cache_ttl_seconds: 3600
+
+# UI configuration
+ui:
+  page_title: "Gharp Search - Large CSV Analytics"
+  layout: "wide"
+  max_upload_size_mb: 2048
+  progress_update_interval: 5
+
+# Security configuration
+security:
+  session_timeout_hours: 8
+  max_login_attempts: 5
+  password_min_length: 8
+  require_strong_passwords: true

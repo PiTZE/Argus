@@ -1,34 +1,69 @@
-# ☿ Deployment Guide
+# 🚀 Deployment Guide - Large CSV Analytics
 
-*"Getting this thing running shouldn't require a computer science degree."*
+*"Enterprise-grade deployment for massive CSV files."*
 
-## ⚡ Quick Setup
+## ⚡ Quick Setup (Development)
 
 ### 1. Install Dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
-### 2. Set Up Users
+### 2. Configure Application
 ```bash
-# Add a new user
-python user_manager.py add username password "Display Name"
-
-# List current users
-python user_manager.py list
-
-# Remove a user
-python user_manager.py delete username
+# Copy and edit configuration
+cp config.yaml config.local.yaml
+# Edit database and search settings as needed
 ```
 
 ### 3. Add Your Data
 - Put your CSV files in the `db/` directory
-- The app will automatically detect and analyze them
+- Files up to 2GB each are supported
 - Different column structures are fine
 
 ### 4. Run the Application
 ```bash
-streamlit run app.py
+# Development mode
+streamlit run main.py
+
+# Production mode
+streamlit run main.py --server.port=12000 --server.address=0.0.0.0 --server.headless=true
+```
+
+## 🐳 Docker Deployment (Recommended)
+
+### Build and Run
+```bash
+# Build the image
+docker build -t gharp-search .
+
+# Run with volume mounting for data persistence
+docker run -d \
+  --name gharp-search \
+  -p 12000:12000 \
+  -v $(pwd)/data:/app/data \
+  -v $(pwd)/db:/app/db \
+  -v $(pwd)/logs:/app/logs \
+  gharp-search
+```
+
+### Docker Compose
+```yaml
+version: '3.8'
+services:
+  gharp-search:
+    build: .
+    ports:
+      - "12000:12000"
+    volumes:
+      - ./data:/app/data
+      - ./db:/app/db
+      - ./logs:/app/logs
+      - ./exports:/app/exports
+    environment:
+      - STREAMLIT_SERVER_PORT=12000
+      - STREAMLIT_SERVER_ADDRESS=0.0.0.0
+    restart: unless-stopped
 ```
 
 ## ◯ Production Deployment

@@ -1,16 +1,24 @@
-# ☿ The Gharp Codex
+# ☿ Gharp Search - Large CSV Analytics
 
 *"Data doesn't lie, but finding the truth requires the right incantations."*
 
-A CSV search application that actually works. Built for people who need to dig through multiple CSV files without losing their sanity. Authentication included because apparently we can't have nice things without passwords.
+A high-performance CSV search application designed for **very large files (2GB+ each)**. Built with enterprise-grade architecture for people who need to dig through massive CSV datasets without losing their sanity or crashing their systems.
 
-## What It Does
+## 🚀 **Key Features for Large Files**
 
-### ☤ **Search Capabilities**
-- **Multi-file search**: Works across multiple CSV files even when they have different columns
-- **Smart column detection**: Figures out what columns exist and which files have them
-- **Four search types**: Contains, exact match, starts with, ends with (the usual suspects)
-- **Large file handling**: Won't crash your computer when you feed it massive files
+### ☤ **High-Performance Search Engine**
+- **Persistent DuckDB storage**: Convert CSV files once, query instantly
+- **Streaming results**: Handle 2GB+ files without memory issues
+- **Parallel processing**: Search multiple files simultaneously
+- **Smart indexing**: Automatic indexes on searchable columns
+- **Memory optimization**: 8GB+ memory limits with external sorting
+
+### 🔍 **Advanced Search Capabilities**
+- **Multi-file search**: Works across multiple CSV files with different schemas
+- **Five search types**: Contains, exact match, starts with, ends with, regex
+- **Chunked processing**: Stream results in configurable chunks
+- **Result pagination**: Handle millions of results efficiently
+- **Search caching**: Cache frequent queries for instant results
 
 ### ◯ **Data Management**
 - **Dashboard**: Shows you file count, row count, data size - the basics

@@ -1,0 +1,31 @@
+id,name,email,department,salary,hire_date,status,location,manager_id,project_code
+1,John Smith,john.smith@company.com,Engineering,75000,2020-01-15,Active,New York,101,PROJ001
+2,Sarah Johnson,sarah.johnson@company.com,Marketing,65000,2019-03-22,Active,Los Angeles,102,PROJ002
+3,Michael Brown,michael.brown@company.com,Sales,70000,2021-06-10,Active,Chicago,103,PROJ003
+4,Emily Davis,emily.davis@company.com,Engineering,80000,2018-11-05,Active,New York,101,PROJ001
+5,David Wilson,david.wilson@company.com,HR,60000,2020-09-18,Active,Boston,104,PROJ004
+6,Lisa Anderson,lisa.anderson@company.com,Finance,72000,2019-12-03,Active,Seattle,105,PROJ005
+7,Robert Taylor,robert.taylor@company.com,Engineering,78000,2021-02-14,Active,San Francisco,101,PROJ001
+8,Jennifer Martinez,jennifer.martinez@company.com,Marketing,67000,2020-07-20,Active,Los Angeles,102,PROJ002
+9,Christopher Lee,christopher.lee@company.com,Sales,73000,2019-08-12,Active,Miami,103,PROJ003
+10,Amanda White,amanda.white@company.com,Engineering,82000,2018-05-30,Active,Austin,101,PROJ001
+11,James Garcia,james.garcia@company.com,IT,69000,2021-01-08,Active,Denver,106,PROJ006
+12,Michelle Rodriguez,michelle.rodriguez@company.com,Finance,71000,2020-04-25,Active,Seattle,105,PROJ005
+13,Daniel Thompson,daniel.thompson@company.com,Sales,74000,2019-10-17,Active,Phoenix,103,PROJ003
+14,Jessica Clark,jessica.clark@company.com,Marketing,66000,2021-03-12,Active,Portland,102,PROJ002
+15,Kevin Lewis,kevin.lewis@company.com,Engineering,79000,2018-09-22,Active,San Diego,101,PROJ001
+16,Ashley Walker,ashley.walker@company.com,HR,62000,2020-11-14,Active,Boston,104,PROJ004
+17,Ryan Hall,ryan.hall@company.com,IT,70000,2019-06-08,Active,Denver,106,PROJ006
+18,Nicole Young,nicole.young@company.com,Finance,73000,2021-04-30,Active,Seattle,105,PROJ005
+19,Brandon King,brandon.king@company.com,Sales,75000,2020-02-18,Active,Las Vegas,103,PROJ003
+20,Stephanie Wright,stephanie.wright@company.com,Marketing,68000,2019-01-25,Active,Atlanta,102,PROJ002
+21,Tyler Lopez,tyler.lopez@company.com,Engineering,81000,2018-12-11,Active,San Francisco,101,PROJ001
+22,Megan Hill,megan.hill@company.com,HR,63000,2021-05-16,Active,Boston,104,PROJ004
+23,Justin Green,justin.green@company.com,IT,71000,2020-08-07,Active,Denver,106,PROJ006
+24,Brittany Adams,brittany.adams@company.com,Finance,74000,2019-11-29,Active,Seattle,105,PROJ005
+25,Jonathan Baker,jonathan.baker@company.com,Sales,76000,2021-07-03,Active,Orlando,103,PROJ003
+26,Samantha Nelson,samantha.nelson@company.com,Marketing,69000,2020-03-15,Active,Los Angeles,102,PROJ002
+27,Andrew Carter,andrew.carter@company.com,Engineering,83000,2018-08-20,Active,New York,101,PROJ001
+28,Kayla Mitchell,kayla.mitchell@company.com,HR,64000,2021-06-22,Active,Boston,104,PROJ004
+29,Matthew Perez,matthew.perez@company.com,IT,72000,2020-01-09,Active,Denver,106,PROJ006
+30,Lauren Roberts,lauren.roberts@company.com,Finance,75000,2019-04-14,Active,Seattle,105,PROJ005

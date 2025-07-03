@@ -1,0 +1,21 @@
+transaction_id,customer_name,product_name,category,price,quantity,total_amount,sale_date,sales_rep,region
+T001,Alice Cooper,Laptop Pro,Electronics,1299.99,1,1299.99,2024-01-15,John Smith,North
+T002,Bob Johnson,Wireless Mouse,Electronics,29.99,2,59.98,2024-01-16,Sarah Johnson,West
+T003,Carol Davis,Office Chair,Furniture,249.99,1,249.99,2024-01-17,Michael Brown,East
+T004,David Wilson,Standing Desk,Furniture,599.99,1,599.99,2024-01-18,Emily Davis,South
+T005,Eva Martinez,Smartphone,Electronics,799.99,1,799.99,2024-01-19,David Wilson,North
+T006,Frank Taylor,Tablet,Electronics,399.99,1,399.99,2024-01-20,Lisa Anderson,West
+T007,Grace Lee,Bookshelf,Furniture,129.99,2,259.98,2024-01-21,Robert Taylor,East
+T008,Henry White,Monitor,Electronics,299.99,1,299.99,2024-01-22,Jennifer Martinez,South
+T009,Iris Garcia,Keyboard,Electronics,79.99,3,239.97,2024-01-23,Christopher Lee,North
+T010,Jack Rodriguez,Desk Lamp,Furniture,49.99,1,49.99,2024-01-24,Amanda White,West
+T011,Kelly Thompson,Webcam,Electronics,89.99,1,89.99,2024-01-25,James Garcia,East
+T012,Liam Clark,Ergonomic Chair,Furniture,399.99,1,399.99,2024-01-26,Michelle Rodriguez,South
+T013,Mia Lewis,Headphones,Electronics,149.99,1,149.99,2024-01-27,Daniel Thompson,North
+T014,Noah Walker,Coffee Table,Furniture,199.99,1,199.99,2024-01-28,Jessica Clark,West
+T015,Olivia Hall,Printer,Electronics,179.99,1,179.99,2024-01-29,Kevin Lewis,East
+T016,Paul Young,File Cabinet,Furniture,159.99,1,159.99,2024-01-30,Ashley Walker,South
+T017,Quinn King,Router,Electronics,119.99,1,119.99,2024-01-31,Ryan Hall,North
+T018,Rachel Wright,Sofa,Furniture,899.99,1,899.99,2024-02-01,Nicole Young,West
+T019,Sam Lopez,Smart Watch,Electronics,249.99,1,249.99,2024-02-02,Brandon King,East
+T020,Tina Hill,Dining Table,Furniture,499.99,1,499.99,2024-02-03,Stephanie Wright,South
