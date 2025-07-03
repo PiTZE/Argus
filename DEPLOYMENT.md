@@ -1,46 +1,46 @@
-# 🌌 The Codex Deployment Prophecy
+# ☿ Deployment Guide
 
-*"To deploy the Gharp Codex is to spread its divine wisdom across the digital realms..."*
+*"Getting this thing running shouldn't require a computer science degree."*
 
-## ⚡ The Swift Awakening Ritual
+## ⚡ Quick Setup
 
-### I. Summon the Sacred Dependencies
+### 1. Install Dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
-### II. Establish the Circle of Initiates
+### 2. Set Up Users
 ```bash
-# Induct a new seeker into the mysteries
-python user_manager.py add username password "Chosen Name"
+# Add a new user
+python user_manager.py add username password "Display Name"
 
-# Scry the current circle of believers
+# List current users
 python user_manager.py list
 
-# Banish the unworthy from the sacred realm
+# Remove a user
 python user_manager.py delete username
 ```
 
-### III. Prepare the Sacred Scroll Chamber
-- Place your CSV offerings within the `db/` sanctum
-- The Codex shall automatically sense and analyze their essence
-- All scrolls are welcome, regardless of their column configurations
+### 3. Add Your Data
+- Put your CSV files in the `db/` directory
+- The app will automatically detect and analyze them
+- Different column structures are fine
 
-### IV. Invoke the Great Awakening
+### 4. Run the Application
 ```bash
 streamlit run app.py
 ```
 
-## 🏛️ The Great Temple Deployment
+## ◯ Production Deployment
 
-### Sacred Environmental Incantations
+### Environment Variables
 ```bash
 export STREAMLIT_SERVER_PORT=8501
 export STREAMLIT_SERVER_ADDRESS=0.0.0.0
 ```
 
-### The Containerized Sanctuary (Optional)
-*For those who seek to contain the Codex within ethereal Docker vessels:*
+### Docker (Optional)
+*If you're into containerization:*
 
 ```dockerfile
 FROM python:3.9-slim
@@ -55,33 +55,33 @@ EXPOSE 8501
 CMD ["streamlit", "run", "app.py", "--server.address", "0.0.0.0"]
 ```
 
-### The Sacred Security Protocols
-- Transform the default passphrases immediately upon deployment
-- Invoke HTTPS enchantments in the outer realms
-- Regularly preserve the `config.yaml` tome in secure vaults
-- Monitor the size of incoming data offerings to prevent realm overflow
+### ♄ Security Checklist
+- Change the default passwords immediately
+- Use HTTPS in production
+- Back up your `config.yaml` file regularly
+- Monitor file sizes to prevent system overload
 
-## ⚡ The Art of Performance Transcendence
+## ⚡ Performance Optimization
 
-### Taming the Great Data Leviathans (>100MB)
-- Expand your realm's memory allocation to accommodate the beasts
-- Harness DuckDB's external sorting sorcery for massive datasets
-- Monitor the ethereal disk space consumed by temporary manifestations
+### Large Files (>100MB)
+- Increase system memory allocation
+- Use DuckDB's external sorting for massive datasets
+- Monitor disk space for temporary files
 
-### The Database Enlightenment
-- DuckDB's ancient wisdom automatically optimizes all query incantations
-- Colossal files are processed in sacred chunks to preserve system harmony
-- Memory consumption is watched by vigilant guardians and constrained when necessary
+### Database Optimization
+- DuckDB automatically optimizes queries
+- Large files are processed in chunks
+- Memory usage is monitored and limited
 
-## 🔮 Divining Solutions to Common Mysteries
+## ※ Troubleshooting
 
-### The Frequent Tribulations
-1. **Memory Corruption Curses**: Reduce the size of your offerings or expand your computational vessel's capacity
-2. **Guardian Authentication Failures**: Examine the `config.yaml` tome for proper formatting and blessed syntax
-3. **Lost Scroll Prophecies**: Ensure your CSV offerings reside within the `db/` sanctum
-4. **Sluggish Performance Afflictions**: Investigate file dimensions and available memory resources
+### Common Issues
+1. **Memory errors**: Reduce file sizes or increase system memory
+2. **Authentication failures**: Check `config.yaml` format and syntax
+3. **Missing files**: Make sure CSV files are in the `db/` directory
+4. **Slow performance**: Check file sizes and available memory
 
-### The Sacred Logs and Omens
-- Application chronicles are inscribed in `streamlit.log` for future divination
-- Consult your browser's mystical console for client-side revelations
-- Monitor system resources during communion with massive data entities
+### Logs and Debugging
+- Application logs are written to `streamlit.log`
+- Check browser console for client-side errors
+- Monitor system resources when processing large files
