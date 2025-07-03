@@ -1,0 +1,11 @@
+product_id,name,category,price,stock_quantity
+101,Laptop Pro,Electronics,1299.99,25
+102,Wireless Mouse,Electronics,29.99,150
+103,Office Chair,Furniture,249.99,40
+104,Standing Desk,Furniture,599.99,15
+105,Smartphone,Electronics,799.99,60
+106,Tablet,Electronics,399.99,35
+107,Bookshelf,Furniture,129.99,20
+108,Monitor,Electronics,299.99,45
+109,Keyboard,Electronics,79.99,80
+110,Desk Lamp,Furniture,49.99,100
