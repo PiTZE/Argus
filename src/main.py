@@ -239,6 +239,22 @@ with st.sidebar:
         step=10,
         help="Number of rows to display per page"
     )
+    
+    # Cache management
+    st.subheader("Cache")
+    if st.button("Clear Cache", help="Clear cached results and refresh data"):
+        # Clear all cache-related session state
+        for key in ['cached_results', 'cached_total_rows', 'cache_key']:
+            if key in st.session_state:
+                del st.session_state[key]
+        if 'current_page' in st.session_state:
+            st.session_state.current_page = 1
+        st.rerun()
+    
+    # Show cache status
+    if 'cached_results' in st.session_state:
+        cache_size = len(st.session_state.cached_results)
+        st.caption(f"Cached: {cache_size:,} results")
 
 # ============================================================================
 # FILE INFORMATION DISPLAY
@@ -263,7 +279,7 @@ with st.expander("View file details", expanded=False):
             st.write(f"Columns: {stats['columns']}")
 
 # ============================================================================
-# SEARCH AND RESULTS
+# SEARCH AND RESULTS WITH CACHING
 # ============================================================================
 
 if query:
@@ -274,23 +290,56 @@ if query:
     st.info(search_info)
     
     try:
-        # Build where clause with loading indicator
-        with st.spinner("Building search query..."):
-            if selected_column == "All columns":
-                where_conditions = []
-                for col_name in column_names:
-                    where_conditions.append(f"CAST({col_name} AS VARCHAR) ILIKE '%{query}%'")
-                where_clause = " OR ".join(where_conditions) if where_conditions else "1=0"
-            else:
-                where_clause = f"CAST({selected_column} AS VARCHAR) ILIKE '%{query}%'"
+        # Create cache key from search parameters
+        cache_key = f"{selected_group}_{selected_column}_{query}_{len(selected_files)}"
         
-        # Get total count with loading indicator
-        with st.spinner("Counting results..."):
-            count_query = f"""
-            SELECT COUNT(*) as total FROM {table_expr}
+        # Check if we need to invalidate cache
+        cache_invalid = (
+            'cache_key' not in st.session_state or
+            st.session_state.cache_key != cache_key or
+            'cached_results' not in st.session_state
+        )
+        
+        if cache_invalid:
+            # Clear old cache and reset pagination
+            for key in ['cached_results', 'cached_total_rows']:
+                if key in st.session_state:
+                    del st.session_state[key]
+            st.session_state.cache_key = cache_key
+            st.session_state.current_page = 1
+            
+            # Build where clause
+            with st.spinner("Building search query..."):
+                if selected_column == "All columns":
+                    where_conditions = []
+                    for col_name in column_names:
+                        where_conditions.append(f"CAST({col_name} AS VARCHAR) ILIKE '%{query}%'")
+                    where_clause = " OR ".join(where_conditions) if where_conditions else "1=0"
+                else:
+                    where_clause = f"CAST({selected_column} AS VARCHAR) ILIKE '%{query}%'"
+            
+            # Execute full query and cache results
+            full_query = f"""
+            SELECT * FROM {table_expr}
             WHERE {where_clause}
+            ORDER BY _source_file
             """
-            total_rows = con.execute(count_query).fetchone()[0]
+            
+            with st.spinner("Executing search query and caching results..."):
+                start_time = time.time()
+                cached_results = con.execute(full_query).fetchdf()
+                query_time = time.time() - start_time
+                
+                # Store in session state
+                st.session_state.cached_results = cached_results
+                st.session_state.cached_total_rows = len(cached_results)
+                st.session_state.query_time = query_time
+            
+            st.success(f"Query executed and cached in {query_time:.3f} seconds")
+        
+        # Get cached results
+        cached_results = st.session_state.cached_results
+        total_rows = st.session_state.cached_total_rows
         
         if total_rows == 0:
             st.info("No results found.")
@@ -308,8 +357,9 @@ if query:
             if st.session_state.current_page < 1:
                 st.session_state.current_page = 1
             
-            # Results summary
-            st.write(f"**Found {total_rows:,} results** (Page {st.session_state.current_page} of {total_pages})")
+            # Results summary with cache info
+            cache_indicator = "Cached" if not cache_invalid else "Nope"
+            st.write(f"**Found {total_rows:,} results** (Page {st.session_state.current_page} of {total_pages}) {cache_indicator}")
             
             # Pagination controls with better layout
             col1, col2, col3, col4, col5 = st.columns([1, 1, 2, 1, 1])
@@ -347,26 +397,24 @@ if query:
                     st.session_state.current_page = total_pages
                     st.rerun()
             
-            # Get paginated results with loading indicator and timing
-            offset = (st.session_state.current_page - 1) * rows_per_page
+            # Get paginated results from cache (instant!)
+            start_idx = (st.session_state.current_page - 1) * rows_per_page
+            end_idx = start_idx + rows_per_page
+            paginated_results = cached_results.iloc[start_idx:end_idx]
             
-            duck_query = f"""
-            SELECT * FROM {table_expr}
-            WHERE {where_clause}
-            ORDER BY _source_file
-            LIMIT {rows_per_page} OFFSET {offset}
-            """
-            
-            with st.spinner("Executing query..."):
-                start_time = time.time()
-                result = con.execute(duck_query).fetchdf()
-                query_time = time.time() - start_time
-            
-            # Display query execution time
-            st.caption(f"Query executed in {query_time:.3f} seconds")
+            # Display performance info
+            if hasattr(st.session_state, 'query_time'):
+                if cache_invalid:
+                    st.caption(f"⚡ Initial query: {st.session_state.query_time:.3f}s | Pagination: instant (cached)")
+                else:
+                    st.caption(f"⚡ Pagination: instant (using cached results from {st.session_state.query_time:.3f}s query)")
             
             # Display results
-            st.dataframe(result, use_container_width=True)
+            st.dataframe(paginated_results, use_container_width=True)
+            
+            # Memory usage warning for large result sets
+            if total_rows > 50000:
+                st.warning(f"Large result set ({total_rows:,} rows) cached in memory. Consider refining your search for better performance.")
         
     except Exception as e:
         st.error(f"Query failed: {e}")
