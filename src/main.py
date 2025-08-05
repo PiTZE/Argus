@@ -229,6 +229,14 @@ with st.sidebar:
         help="Search for text in the selected column(s)"
     )
     
+    # Search button
+    search_clicked = st.button(
+        "🔍 Search",
+        use_container_width=True,
+        help="Click to execute the search",
+        disabled=not query.strip()  # Disable if query is empty
+    )
+    
     # Pagination settings
     st.subheader("Settings")
     rows_per_page = st.number_input(
@@ -282,7 +290,7 @@ with st.expander("View file details", expanded=False):
 # SEARCH AND RESULTS WITH CACHING
 # ============================================================================
 
-if query:
+if query and search_clicked:
     st.subheader("Search Results")
     
     # Display search information
@@ -421,4 +429,7 @@ if query:
         st.error("Please check your search query and try again.")
 
 else:
-    st.info("Enter a search term in the sidebar to begin searching.")
+    if query.strip():
+        st.info("Click the 🔍 Search button to execute your search.")
+    else:
+        st.info("Enter a search term in the sidebar and click the Search button to begin searching.")
