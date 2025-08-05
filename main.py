@@ -2,16 +2,16 @@ import streamlit as st
 import duckdb
 import os
 import glob
+from config import load_config, configure_duckdb, get_directories
 
-PARQUET_DIR = "data/parq"
+config = load_config()
+dirs = get_directories(config)
+PARQUET_DIR = dirs['output_dir']
 
 st.title("Argus 👁👁")
 
 con = duckdb.connect()
-con.execute("SET memory_limit='256MB'")
-con.execute("SET threads=1")
-con.execute("SET max_memory='256MB'")
-con.execute("SET temp_directory='/tmp'")
+configure_duckdb(con, config)
 parquet_files = glob.glob(os.path.join(PARQUET_DIR, "*.parquet"))
 
 if not parquet_files:

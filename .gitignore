@@ -32,3 +32,10 @@ dist/
 # Cache
 .cache/
 .pytest_cache/
+
+# Configuration
+config.yaml
+
+# Data and logs
+data/
+logs/

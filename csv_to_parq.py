@@ -6,28 +6,32 @@ import logging
 import psutil
 from pathlib import Path
 from datetime import datetime
+from config import load_config, configure_duckdb, get_directories
 
-INPUT_DIR = "data/csv"
-OUTPUT_DIR = "data/parq"
-
-def setup_logging():
-    log_dir = Path("logs")
+def setup_logging(config):
+    dirs = get_directories(config)
+    log_dir = Path(dirs['log_dir'])
     log_dir.mkdir(exist_ok=True)
     
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     log_file = log_dir / f"csv_to_parq_{timestamp}.log"
     
+    logging_config = config.get('logging', {})
+    date_format = logging_config.get('date_format', '%Y-%m-%d %H:%M:%S')
+    
     formatter = logging.Formatter(
         '%(asctime)s - %(levelname)s - %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S'
+        datefmt=date_format
     )
     
     file_handler = logging.FileHandler(log_file)
-    file_handler.setLevel(logging.DEBUG)
+    file_level = logging_config.get('file_level', 'DEBUG')
+    file_handler.setLevel(getattr(logging, file_level))
     file_handler.setFormatter(formatter)
     
     console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setLevel(logging.INFO)
+    console_level = logging_config.get('console_level', 'INFO')
+    console_handler.setLevel(getattr(logging, console_level))
     console_handler.setFormatter(formatter)
     
     logger = logging.getLogger('csv_to_parq')
@@ -57,7 +61,7 @@ def log_system_info(logger):
     except Exception as e:
         logger.warning(f"Could not get system info: {e}")
 
-def clean_and_convert(csv_path, parquet_path, logger, file_index, total_files):
+def clean_and_convert(csv_path, parquet_path, logger, file_index, total_files, config):
     start_time = time.time()
     
     try:
@@ -66,10 +70,7 @@ def clean_and_convert(csv_path, parquet_path, logger, file_index, total_files):
         logger.info(f"File size: {file_size_mb:.1f} MB")
         
         with duckdb.connect() as con:
-            con.execute("SET memory_limit='256MB'")
-            con.execute("SET threads=1")
-            con.execute("SET max_memory='256MB'")
-            con.execute("SET temp_directory='/tmp'")
+            configure_duckdb(con, config)
             
             logger.info("Step 1/3: Analyzing column structure...")
             col_query = f"""
@@ -150,7 +151,8 @@ def clean_and_convert(csv_path, parquet_path, logger, file_index, total_files):
     return True
 
 def main():
-    logger = setup_logging()
+    config = load_config()
+    logger = setup_logging(config)
     
     try:
         logger.info("=" * 60)
@@ -159,25 +161,32 @@ def main():
         
         log_system_info(logger)
         
-        Path(OUTPUT_DIR).mkdir(parents=True, exist_ok=True)
-        logger.info(f"Output directory: {OUTPUT_DIR}")
+        dirs = get_directories(config)
+        input_dir = dirs['input_dir']
+        output_dir = dirs['output_dir']
         
-        input_path = Path(INPUT_DIR)
+        Path(output_dir).mkdir(parents=True, exist_ok=True)
+        logger.info(f"Output directory: {output_dir}")
+        
+        input_path = Path(input_dir)
         if not input_path.exists():
-            logger.error(f"Input directory {INPUT_DIR} does not exist!")
+            logger.error(f"Input directory {input_dir} does not exist!")
             return 1
         
-        logger.info(f"Input directory: {INPUT_DIR}")
+        logger.info(f"Input directory: {input_dir}")
         
         logger.info("Scanning for CSV files...")
         csv_files = list(input_path.glob("*.csv"))
         
         if not csv_files:
-            logger.error(f"No CSV files found in {INPUT_DIR}")
+            logger.error(f"No CSV files found in {input_dir}")
             return 1
         
+        processing_config = config.get('processing', {})
         csv_files_with_size = [(f, get_file_size_mb(f)) for f in csv_files]
-        csv_files_with_size.sort(key=lambda x: x[1])
+        
+        if processing_config.get('sort_files_by_size', True):
+            csv_files_with_size.sort(key=lambda x: x[1])
         
         total_size_mb = sum(size for _, size in csv_files_with_size)
         logger.info(f"Found {len(csv_files)} CSV files to process")
@@ -194,7 +203,7 @@ def main():
         
         for i, (csv_file, size_mb) in enumerate(csv_files_with_size, 1):
             parquet_name = csv_file.stem + ".parquet"
-            parquet_path = Path(OUTPUT_DIR) / parquet_name
+            parquet_path = Path(output_dir) / parquet_name
             
             if parquet_path.exists():
                 logger.warning(f"[{i}/{len(csv_files)}] Output file already exists: {parquet_path}")
@@ -203,7 +212,7 @@ def main():
             
             logger.info(f"[{i}/{len(csv_files)}] Starting file {i} of {len(csv_files)}")
             
-            if clean_and_convert(str(csv_file), str(parquet_path), logger, i, len(csv_files)):
+            if clean_and_convert(str(csv_file), str(parquet_path), logger, i, len(csv_files), config):
                 successful += 1
                 logger.info(f"[{i}/{len(csv_files)}] ✓ SUCCESS")
             else:

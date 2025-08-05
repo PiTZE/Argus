@@ -1,0 +1,27 @@
+# Argus Configuration File
+# Copy this file to config.yaml and adjust settings for your environment
+
+# Directory paths
+directories:
+  input_dir: "data/csv"
+  output_dir: "data/parq"
+  log_dir: "logs"
+
+# DuckDB memory settings
+duckdb:
+  memory_limit: "256MB"
+  max_memory: "256MB"
+  threads: 1
+  temp_directory: "/tmp"
+
+# Logging configuration
+logging:
+  console_level: "INFO"
+  file_level: "DEBUG"
+  date_format: "%Y-%m-%d %H:%M:%S"
+
+# Processing settings
+processing:
+  enable_row_count: false
+  enable_memory_monitoring: false
+  sort_files_by_size: true
