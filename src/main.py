@@ -150,32 +150,46 @@ else:
                 if total_rows == 0:
                     st.info("No results found.")
                 else:
+                    # Initialize session state
+                    if 'current_page' not in st.session_state:
+                        st.session_state.current_page = 1
+                    
                     # Calculate pagination
                     total_pages = (total_rows + rows_per_page - 1) // rows_per_page
+                    
+                    # Ensure current page is within bounds
+                    if st.session_state.current_page > total_pages:
+                        st.session_state.current_page = total_pages
+                    if st.session_state.current_page < 1:
+                        st.session_state.current_page = 1
                     
                     col_left, col_center, col_right = st.columns([1, 2, 1])
                     
                     with col_left:
-                        if st.button("◀ Previous", disabled=st.session_state.get('current_page', 1) <= 1):
-                            st.session_state.current_page = max(1, st.session_state.get('current_page', 1) - 1)
+                        if st.button("◀ Previous", disabled=st.session_state.current_page <= 1):
+                            st.session_state.current_page = max(1, st.session_state.current_page - 1)
+                            st.rerun()
                     
                     with col_center:
                         current_page = st.number_input(
                             f"Page (1-{total_pages}):",
                             min_value=1,
                             max_value=total_pages,
-                            value=st.session_state.get('current_page', 1),
+                            value=st.session_state.current_page,
                             key='page_input'
                         )
-                        st.session_state.current_page = current_page
+                        if current_page != st.session_state.current_page:
+                            st.session_state.current_page = current_page
+                            st.rerun()
                         st.write(f"Showing {total_rows} total results")
                     
                     with col_right:
-                        if st.button("Next ▶", disabled=st.session_state.get('current_page', 1) >= total_pages):
-                            st.session_state.current_page = min(total_pages, st.session_state.get('current_page', 1) + 1)
+                        if st.button("Next ▶", disabled=st.session_state.current_page >= total_pages):
+                            st.session_state.current_page = min(total_pages, st.session_state.current_page + 1)
+                            st.rerun()
                     
                     # Get paginated results
-                    offset = (st.session_state.get('current_page', 1) - 1) * rows_per_page
+                    offset = (st.session_state.current_page - 1) * rows_per_page
                     
                     duck_query = f"""
                     SELECT * FROM {table_expr}
