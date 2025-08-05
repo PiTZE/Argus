@@ -226,7 +226,7 @@ with st.sidebar:
         "Rows per page:",
         min_value=10,
         max_value=1000,
-        value=100,
+        value=10,
         step=10,
         help="Number of rows to display per page"
     )
