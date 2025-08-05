@@ -400,9 +400,9 @@ if search_should_be_active:
             
             if hasattr(st.session_state, 'query_time'):
                 if cache_invalid:
-                    st.caption(f"⚡ Initial query: {st.session_state.query_time:.3f}s | Pagination: instant (cached)")
+                    st.caption(f"Search completed in {st.session_state.query_time:.3f} seconds.")
                 else:
-                    st.caption(f"⚡ Pagination: instant (using cached results from {st.session_state.query_time:.3f}s query)")
+                    st.caption(f"Using cached results({st.session_state.query_time:.3f}s).")
             
             st.dataframe(paginated_results, use_container_width=True)
             
