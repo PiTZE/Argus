@@ -231,7 +231,7 @@ with st.sidebar:
     
     # Search button
     search_clicked = st.button(
-        "🔍 Search",
+        "Search",
         use_container_width=True,
         help="Click to execute the search",
         disabled=not query.strip()  # Disable if query is empty
