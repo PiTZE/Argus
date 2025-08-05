@@ -193,7 +193,10 @@ with st.sidebar:
     try:
         with st.spinner("Loading column information..."):
             table_expr = create_union_query(selected_files)
-            columns_query = f"DESCRIBE SELECT * FROM {table_expr}"
+            if len(selected_files) == 1:
+                columns_query = f"DESCRIBE {table_expr}"
+            else:
+                columns_query = f"DESCRIBE SELECT * FROM {table_expr}"
             columns_result = con.execute(columns_query).fetchall()
             column_names = [col[0] for col in columns_result if col[0] != '_source_file']
         
@@ -220,6 +223,14 @@ with st.sidebar:
             help="Click to execute the search or press Enter",
             type="primary"
         )
+        
+        if search_clicked and query.strip():
+            st.session_state.search_active = True
+            st.session_state.active_query = query.strip()
+        elif not query.strip():
+            st.session_state.search_active = False
+            if 'active_query' in st.session_state:
+                del st.session_state.active_query
     
     st.subheader("Settings")
     rows_per_page = st.number_input(
@@ -233,7 +244,7 @@ with st.sidebar:
     
     st.subheader("Cache")
     if st.button("Clear Cache", help="Clear cached results and refresh data"):
-        for key in ['cached_results', 'cached_total_rows', 'cache_key']:
+        for key in ['cached_results', 'cached_total_rows', 'cache_key', 'search_active', 'active_query']:
             if key in st.session_state:
                 del st.session_state[key]
         if 'current_page' in st.session_state:
@@ -269,7 +280,12 @@ with st.expander("View file details", expanded=False):
 # SEARCH AND RESULTS WITH CACHING
 # ============================================================================
 
-if query and search_clicked:
+search_should_be_active = (
+    (query.strip() and search_clicked) or  # Just performed a search
+    (st.session_state.get('search_active', False) and 'cached_results' in st.session_state)
+)
+
+if search_should_be_active:
     st.subheader("Search Results")
     
     search_info = f"Searching in **{len(selected_files)} files** | Column: **{selected_column}** | Query: `{query}`"
@@ -300,11 +316,18 @@ if query and search_clicked:
                 else:
                     where_clause = f"CAST({selected_column} AS VARCHAR) ILIKE '%{query}%'"
             
-            full_query = f"""
-            SELECT * FROM {table_expr}
-            WHERE {where_clause}
-            ORDER BY _source_file
-            """
+            if len(selected_files) == 1:
+                full_query = f"""
+                SELECT * FROM ({table_expr})
+                WHERE {where_clause}
+                ORDER BY _source_file
+                """
+            else:
+                full_query = f"""
+                SELECT * FROM {table_expr}
+                WHERE {where_clause}
+                ORDER BY _source_file
+                """
             
             with st.spinner("Executing search query and caching results..."):
                 start_time = time.time()
@@ -391,7 +414,7 @@ if query and search_clicked:
         st.error("Please check your search query and try again.")
 
 else:
-    if query.strip():
+    if query.strip() and not st.session_state.get('search_active', False):
         st.info("Click the Search button to execute your search.")
-    else:
+    elif not query.strip():
         st.info("Enter a search term in the sidebar and click the Search button to begin searching.")
