@@ -114,11 +114,29 @@ start_app() {
     
     mkdir -p logs
     cd "$SCRIPT_DIR"
-    nohup streamlit run "$MAIN_SCRIPT" --server.port 8501 --server.address 0.0.0.0 > logs/argus.log 2>&1 &
+    
+    log_info "Launching Streamlit..."
+    nohup streamlit run "$MAIN_SCRIPT" > logs/argus.log 2>&1 &
     
     echo $! > "$PID_FILE"
     log_success "Started (PID: $(cat $PID_FILE))"
-    log_info "Access: http://localhost:8501"
+    sleep 3
+    if [ -f "logs/argus.log" ]; then
+        LOCAL_URL=$(grep -o "Local URL: http://[^[:space:]]*" logs/argus.log | tail -1 | cut -d' ' -f3)
+        NETWORK_URL=$(grep -o "Network URL: http://[^[:space:]]*" logs/argus.log | tail -1 | cut -d' ' -f3)
+        
+        if [ -n "$LOCAL_URL" ]; then
+            log_info "$LOCAL_URL"
+        else
+            log_info "Local URL: http://localhost:8501"
+        fi
+        
+        if [ -n "$NETWORK_URL" ]; then
+            log_info "$NETWORK_URL"
+        fi
+    else
+        log_info "Local URL: http://localhost:8501"
+    fi
 }
 
 stop_app() {
