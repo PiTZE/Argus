@@ -22,15 +22,6 @@ st.set_page_config(
 
 st.title("Argus 👁👁")
 
-# Hide the "Press Enter to submit form" text
-st.markdown("""
-<style>
-.stForm > div[data-testid="stMarkdownContainer"] > p {
-    display: none;
-}
-</style>
-""", unsafe_allow_html=True)
-
 # Initialize database connection
 con = duckdb.connect()
 configure_duckdb(con, config)
