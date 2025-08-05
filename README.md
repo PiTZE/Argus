@@ -3,6 +3,11 @@
 a simple web interface for tabular data.
 
 ## Setup
+```bash
+git clone https://github.com/PiTZE/Argus.git
+```
+
+Clone the repo
 
 ```bash
 ./manage.sh install
