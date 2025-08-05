@@ -12,6 +12,11 @@ REQUIREMENTS_FILE="$SCRIPT_DIR/requirements.txt"
 MAIN_SCRIPT="$SCRIPT_DIR/src/main.py"
 CSV_PROCESSOR="$SCRIPT_DIR/src/csv_to_parq.py"
 
+# Service variables
+SERVICE_NAME="argus"
+SERVICE_FILE_USER="$HOME/.config/systemd/user/$SERVICE_NAME.service"
+SERVICE_FILE_SYSTEM="/etc/systemd/system/$SERVICE_NAME.service"
+
 # Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -194,15 +199,292 @@ process_data() {
     fi
 }
 
+# Service management functions
+create_service_file() {
+    local service_file="$1"
+    local service_type="$2"
+    
+    cat > "$service_file" << EOF
+[Unit]
+Description=Argus Streamlit Application
+After=network.target
+Wants=network.target
+
+[Service]
+Type=forking
+User=$(whoami)
+WorkingDirectory=$SCRIPT_DIR
+ExecStart=$SCRIPT_DIR/manage.sh start
+ExecStop=$SCRIPT_DIR/manage.sh stop
+PIDFile=$SCRIPT_DIR/argus.pid
+Restart=always
+RestartSec=10
+StartLimitBurst=5
+StartLimitIntervalSec=60
+Environment=PATH=$SCRIPT_DIR/.venv/bin:/usr/local/bin:/usr/bin:/bin
+
+[Install]
+WantedBy=multi-user.target
+EOF
+}
+
+install_service() {
+    log_info "Installing Argus service..."
+    
+    # Check if systemd is available
+    if ! command -v systemctl &> /dev/null; then
+        log_error "systemctl not found. This system doesn't support systemd services."
+        exit 1
+    fi
+    
+    # Determine service type based on user privileges
+    local use_user_service=true
+    local service_file="$SERVICE_FILE_USER"
+    local systemctl_cmd="systemctl --user"
+    
+    # Check if we should install as system service
+    if [[ "$1" == "--system" ]]; then
+        if [[ $EUID -ne 0 ]]; then
+            log_error "System service installation requires root privileges"
+            log_info "Run with sudo or use user service (default)"
+            exit 1
+        fi
+        use_user_service=false
+        service_file="$SERVICE_FILE_SYSTEM"
+        systemctl_cmd="systemctl"
+    fi
+    
+    # Create service directory if needed
+    if [[ "$use_user_service" == true ]]; then
+        mkdir -p "$(dirname "$SERVICE_FILE_USER")"
+    fi
+    
+    # Check if service already exists
+    if [[ -f "$service_file" ]]; then
+        log_warning "Service file already exists: $service_file"
+        log_info "Use 'service --remove' first to reinstall"
+        exit 1
+    fi
+    
+    # Create service file
+    log_info "Creating service file: $service_file"
+    create_service_file "$service_file" "$use_user_service"
+    
+    # Reload systemd and enable service
+    log_info "Reloading systemd daemon..."
+    $systemctl_cmd daemon-reload
+    
+    log_info "Enabling service..."
+    $systemctl_cmd enable "$SERVICE_NAME"
+    
+    log_info "Starting service..."
+    $systemctl_cmd start "$SERVICE_NAME"
+    
+    # Wait a moment and check status
+    sleep 2
+    if $systemctl_cmd is-active --quiet "$SERVICE_NAME"; then
+        log_success "Service installed and started successfully"
+        if [[ "$use_user_service" == true ]]; then
+            log_info "Service type: User service"
+            log_info "Control with: systemctl --user {start|stop|status|restart} $SERVICE_NAME"
+        else
+            log_info "Service type: System service"
+            log_info "Control with: systemctl {start|stop|status|restart} $SERVICE_NAME"
+        fi
+    else
+        log_error "Service installation failed"
+        $systemctl_cmd status "$SERVICE_NAME" --no-pager
+        exit 1
+    fi
+}
+
+remove_service() {
+    log_info "Removing Argus service..."
+    
+    if ! command -v systemctl &> /dev/null; then
+        log_error "systemctl not found. This system doesn't support systemd services."
+        exit 1
+    fi
+    
+    local service_file=""
+    local systemctl_cmd=""
+    local service_exists=false
+    
+    # Check which type of service exists
+    if [[ -f "$SERVICE_FILE_USER" ]]; then
+        service_file="$SERVICE_FILE_USER"
+        systemctl_cmd="systemctl --user"
+        service_exists=true
+        log_info "Found user service"
+    elif [[ -f "$SERVICE_FILE_SYSTEM" ]]; then
+        if [[ $EUID -ne 0 ]]; then
+            log_error "System service removal requires root privileges"
+            exit 1
+        fi
+        service_file="$SERVICE_FILE_SYSTEM"
+        systemctl_cmd="systemctl"
+        service_exists=true
+        log_info "Found system service"
+    fi
+    
+    if [[ "$service_exists" == false ]]; then
+        log_warning "No service installation found"
+        exit 0
+    fi
+    
+    # Stop and disable service
+    log_info "Stopping service..."
+    $systemctl_cmd stop "$SERVICE_NAME" 2>/dev/null || true
+    
+    log_info "Disabling service..."
+    $systemctl_cmd disable "$SERVICE_NAME" 2>/dev/null || true
+    
+    # Remove service file
+    log_info "Removing service file: $service_file"
+    rm -f "$service_file"
+    
+    # Reload systemd
+    log_info "Reloading systemd daemon..."
+    $systemctl_cmd daemon-reload
+    
+    log_success "Service removed successfully"
+}
+
+start_service() {
+    log_info "Starting Argus service..."
+    
+    if ! command -v systemctl &> /dev/null; then
+        log_error "systemctl not found. This system doesn't support systemd services."
+        exit 1
+    fi
+    
+    local systemctl_cmd=""
+    
+    # Determine which service type is installed
+    if [[ -f "$SERVICE_FILE_USER" ]]; then
+        systemctl_cmd="systemctl --user"
+    elif [[ -f "$SERVICE_FILE_SYSTEM" ]]; then
+        systemctl_cmd="systemctl"
+    else
+        log_error "No service installation found"
+        log_info "Run 'service --install' first"
+        exit 1
+    fi
+    
+    # Enable and start service
+    $systemctl_cmd enable "$SERVICE_NAME"
+    $systemctl_cmd start "$SERVICE_NAME"
+    
+    # Check status
+    sleep 2
+    if $systemctl_cmd is-active --quiet "$SERVICE_NAME"; then
+        log_success "Service started successfully"
+    else
+        log_error "Failed to start service"
+        $systemctl_cmd status "$SERVICE_NAME" --no-pager
+        exit 1
+    fi
+}
+
+stop_service() {
+    log_info "Stopping Argus service..."
+    
+    if ! command -v systemctl &> /dev/null; then
+        log_error "systemctl not found. This system doesn't support systemd services."
+        exit 1
+    fi
+    
+    local systemctl_cmd=""
+    
+    # Determine which service type is installed
+    if [[ -f "$SERVICE_FILE_USER" ]]; then
+        systemctl_cmd="systemctl --user"
+    elif [[ -f "$SERVICE_FILE_SYSTEM" ]]; then
+        systemctl_cmd="systemctl"
+    else
+        log_error "No service installation found"
+        exit 1
+    fi
+    
+    # Stop and disable service
+    $systemctl_cmd stop "$SERVICE_NAME"
+    $systemctl_cmd disable "$SERVICE_NAME"
+    
+    log_success "Service stopped and disabled"
+}
+
+status_service() {
+    if ! command -v systemctl &> /dev/null; then
+        log_error "systemctl not found. This system doesn't support systemd services."
+        exit 1
+    fi
+    
+    local systemctl_cmd=""
+    
+    # Determine which service type is installed
+    if [[ -f "$SERVICE_FILE_USER" ]]; then
+        systemctl_cmd="systemctl --user"
+        log_info "Service type: User service"
+    elif [[ -f "$SERVICE_FILE_SYSTEM" ]]; then
+        systemctl_cmd="systemctl"
+        log_info "Service type: System service"
+    else
+        log_error "No service installation found"
+        exit 1
+    fi
+    
+    $systemctl_cmd status "$SERVICE_NAME" --no-pager
+}
+
+logs_service() {
+    if ! command -v journalctl &> /dev/null; then
+        log_error "journalctl not found. Cannot view service logs."
+        exit 1
+    fi
+    
+    local journalctl_cmd=""
+    
+    # Determine which service type is installed
+    if [[ -f "$SERVICE_FILE_USER" ]]; then
+        journalctl_cmd="journalctl --user"
+    elif [[ -f "$SERVICE_FILE_SYSTEM" ]]; then
+        journalctl_cmd="journalctl"
+    else
+        log_error "No service installation found"
+        exit 1
+    fi
+    
+    log_info "Showing service logs (press Ctrl+C to exit)..."
+    $journalctl_cmd -u "$SERVICE_NAME" -f
+}
+
 show_help() {
-    echo "Usage: $0 [install|start|stop|process-data|help]"
+    echo "Usage: $0 [install|start|stop|process-data|service|help]"
     echo ""
     echo "Commands:"
     echo "  install             Setup virtual environment and dependencies"
     echo "  start               Start web interface"
     echo "  stop                Stop web interface"
     echo "  process-data        Convert CSV files to Parquet"
+    echo "  service             Manage systemd service"
     echo "  help                Show this help"
+    echo ""
+    echo "Service Commands:"
+    echo "  service --install   Install, enable and start systemd service"
+    echo "  service --remove    Stop, disable and remove systemd service"
+    echo "  service --start     Start and enable systemd service"
+    echo "  service --stop      Stop and disable systemd service"
+    echo "  service --status    Show service status"
+    echo "  service --logs      Show service logs (follow mode)"
+    echo ""
+    echo "Service Options:"
+    echo "  --system            Install as system service (requires sudo)"
+    echo "                      Default: user service"
+    echo ""
+    echo "Examples:"
+    echo "  $0 service --install                # Install user service"
+    echo "  sudo $0 service --install --system  # Install system service"
+    echo "  $0 service --status                 # Check service status"
     echo ""
     echo "Note: Run 'install' first before using other commands"
 }
@@ -220,6 +502,40 @@ case "${1:-help}" in
         ;;
     process-data)
         process_data
+        ;;
+    service)
+        case "${2:-}" in
+            --install)
+                install_service "$3"
+                ;;
+            --remove)
+                remove_service
+                ;;
+            --start)
+                start_service
+                ;;
+            --stop)
+                stop_service
+                ;;
+            --status)
+                status_service
+                ;;
+            --logs)
+                logs_service
+                ;;
+            *)
+                log_error "Unknown service command: $2"
+                echo ""
+                echo "Available service commands:"
+                echo "  --install   Install, enable and start service"
+                echo "  --remove    Stop, disable and remove service"
+                echo "  --start     Start and enable service"
+                echo "  --stop      Stop and disable service"
+                echo "  --status    Show service status"
+                echo "  --logs      Show service logs"
+                exit 1
+                ;;
+        esac
         ;;
     help|--help|-h)
         show_help
