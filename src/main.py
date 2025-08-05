@@ -222,20 +222,20 @@ with st.sidebar:
         selected_column = "All columns"
         column_names = []
     
-    # Search query
-    query = st.text_input(
-        "Search for:",
-        placeholder="Enter search term...",
-        help="Search for text in the selected column(s)"
-    )
-    
-    # Search button
-    search_clicked = st.button(
-        "Search",
-        use_container_width=True,
-        help="Click to execute the search",
-        disabled=not query.strip()  # Disable if query is empty
-    )
+    # Search form (responds to Enter key)
+    with st.form("search_form"):
+        query = st.text_input(
+            "Search for:",
+            placeholder="Enter search term...",
+            help="Search for text in the selected column(s)"
+        )
+        
+        # Search button (responds to Enter key press)
+        search_clicked = st.form_submit_button(
+            "Search",
+            use_container_width=True,
+            help="Click to execute the search or press Enter"
+        )
     
     # Pagination settings
     st.subheader("Settings")
