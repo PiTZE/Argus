@@ -2,17 +2,33 @@ import streamlit as st
 import duckdb
 import os
 import glob
+import time
 from config import load_config, configure_duckdb, get_directories
+
+# ============================================================================
+# CONFIGURATION AND INITIALIZATION
+# ============================================================================
 
 config = load_config()
 dirs = get_directories(config)
 PARQUET_DIR = dirs['output_dir']
 
+st.set_page_config(
+    page_title="Argus",
+    page_icon="👁",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
 st.title("Argus 👁👁")
 
+# Initialize database connection
 con = duckdb.connect()
 configure_duckdb(con, config)
-parquet_files = glob.glob(os.path.join(PARQUET_DIR, "*.parquet"))
+
+# ============================================================================
+# UTILITY FUNCTIONS
+# ============================================================================
 
 def get_file_schema(file_path):
     """Get column schema for a parquet file"""
@@ -21,6 +37,33 @@ def get_file_schema(file_path):
         return {col[0]: col[1] for col in result}
     except:
         return {}
+
+def get_file_stats(file_path):
+    """Get basic statistics for a parquet file"""
+    try:
+        # Get row count
+        row_count = con.execute(f"SELECT COUNT(*) FROM read_parquet('{file_path}')").fetchone()[0]
+        
+        # Get file size
+        file_size = os.path.getsize(file_path)
+        if file_size < 1024:
+            size_str = f"{file_size} B"
+        elif file_size < 1024 * 1024:
+            size_str = f"{file_size / 1024:.1f} KB"
+        else:
+            size_str = f"{file_size / (1024 * 1024):.1f} MB"
+        
+        # Get column count
+        schema = get_file_schema(file_path)
+        col_count = len(schema)
+        
+        return {
+            'rows': row_count,
+            'size': size_str,
+            'columns': col_count
+        }
+    except:
+        return {'rows': 0, 'size': '0 B', 'columns': 0}
 
 def group_files_by_schema(files):
     """Group files by compatible column schemas"""
@@ -76,130 +119,245 @@ def create_union_query(selected_files):
     
     return f"({' UNION ALL '.join(union_parts)})"
 
+# ============================================================================
+# DATA LOADING AND PROCESSING
+# ============================================================================
+
+# Load parquet files with loading indicator
+with st.spinner("Loading parquet files..."):
+    parquet_files = glob.glob(os.path.join(PARQUET_DIR, "*.parquet"))
+
 if not parquet_files:
     st.error("No Parquet files found.")
-else:
+    st.stop()
+
+# Group files by schema with loading indicator
+with st.spinner("Analyzing file schemas..."):
     file_groups = group_files_by_schema(parquet_files)
+
+if not file_groups:
+    st.error("No valid parquet files found.")
+    st.stop()
+
+# ============================================================================
+# METRICS DASHBOARD
+# ============================================================================
+
+# Calculate total statistics
+total_files = len(parquet_files)
+total_groups = len(file_groups)
+
+# Calculate total rows and size
+with st.spinner("Calculating statistics..."):
+    total_rows = 0
+    total_size_bytes = 0
     
-    if not file_groups:
-        st.error("No valid parquet files found.")
-    else:
+    progress_bar = st.progress(0)
+    for i, file_path in enumerate(parquet_files):
+        stats = get_file_stats(file_path)
+        total_rows += stats['rows']
+        total_size_bytes += os.path.getsize(file_path)
+        progress_bar.progress((i + 1) / len(parquet_files))
+    
+    progress_bar.empty()
+
+# Format total size
+if total_size_bytes < 1024 * 1024:
+    total_size = f"{total_size_bytes / 1024:.1f} KB"
+elif total_size_bytes < 1024 * 1024 * 1024:
+    total_size = f"{total_size_bytes / (1024 * 1024):.1f} MB"
+else:
+    total_size = f"{total_size_bytes / (1024 * 1024 * 1024):.1f} GB"
+
+# Display metrics dashboard
+st.subheader("Data Overview")
+col1, col2, col3, col4 = st.columns(4)
+
+with col1:
+    st.metric("Total Files", total_files)
+
+with col2:
+    st.metric("Schema Groups", total_groups)
+
+with col3:
+    st.metric("Total Rows", f"{total_rows:,}")
+
+with col4:
+    st.metric("Total Size", total_size)
+
+st.divider()
+
+# ============================================================================
+# SIDEBAR CONTROLS
+# ============================================================================
+
+with st.sidebar:
+    st.header("Search Controls")
+    
+    # Schema group selection
+    selected_group = st.selectbox(
+        "Schema Group:",
+        options=list(file_groups.keys()),
+        help="Select a group of files with compatible schemas"
+    )
+    
+    available_files = file_groups[selected_group]
+    selected_files = available_files
+    
+    # Column selection
+    try:
+        with st.spinner("Loading column information..."):
+            table_expr = create_union_query(selected_files)
+            columns_query = f"DESCRIBE SELECT * FROM {table_expr}"
+            columns_result = con.execute(columns_query).fetchall()
+            column_names = [col[0] for col in columns_result if col[0] != '_source_file']
+        
+        selected_column = st.selectbox(
+            "Column:",
+            options=["All columns"] + column_names,
+            help="Select a specific column to search in, or search all columns"
+        )
+    except Exception as e:
+        st.error(f"Error getting columns: {e}")
+        selected_column = "All columns"
+        column_names = []
+    
+    # Search query
+    query = st.text_input(
+        "Search for:",
+        placeholder="Enter search term...",
+        help="Search for text in the selected column(s)"
+    )
+    
+    # Pagination settings
+    st.subheader("Settings")
+    rows_per_page = st.number_input(
+        "Rows per page:",
+        min_value=10,
+        max_value=1000,
+        value=100,
+        step=10,
+        help="Number of rows to display per page"
+    )
+
+# ============================================================================
+# FILE INFORMATION DISPLAY
+# ============================================================================
+
+st.subheader(f"Selected Files ({len(selected_files)})")
+
+# Display file information in an expandable section
+with st.expander("View file details", expanded=False):
+    for file_path in selected_files:
+        filename = os.path.basename(file_path).replace('.parquet', '')
+        stats = get_file_stats(file_path)
+        
         col1, col2, col3, col4 = st.columns(4)
-        
         with col1:
-            selected_group = st.selectbox(
-                "Schema Group:",
-                options=list(file_groups.keys())
-            )
-        
-        available_files = file_groups[selected_group]
-        selected_files = available_files
-        
+            st.write(f"**{filename}**")
         with col2:
-            try:
-                table_expr = create_union_query(selected_files)
-                columns_query = f"DESCRIBE SELECT * FROM {table_expr}"
-                columns_result = con.execute(columns_query).fetchall()
-                column_names = [col[0] for col in columns_result if col[0] != '_source_file']
-                
-                selected_column = st.selectbox(
-                    "Column:",
-                    options=["All columns"] + column_names
-                )
-            except Exception as e:
-                st.error(f"Error getting columns: {e}")
-                selected_column = "All columns"
-                column_names = []
-        
+            st.write(f"Rows: {stats['rows']:,}")
         with col3:
-            query = st.text_input("Search for:", "")
-        
+            st.write(f"Size: {stats['size']}")
         with col4:
-            rows_per_page = st.number_input(
-                "Rows per page:",
-                min_value=10,
-                max_value=1000,
-                value=100,
-                step=10
-            )
+            st.write(f"Columns: {stats['columns']}")
+
+# ============================================================================
+# SEARCH AND RESULTS
+# ============================================================================
+
+if query:
+    st.subheader("Search Results")
+    
+    # Display search information
+    search_info = f"Searching in **{len(selected_files)} files** | Column: **{selected_column}** | Query: `{query}`"
+    st.info(search_info)
+    
+    try:
+        # Build where clause with loading indicator
+        with st.spinner("Building search query..."):
+            if selected_column == "All columns":
+                where_conditions = []
+                for col_name in column_names:
+                    where_conditions.append(f"CAST({col_name} AS VARCHAR) ILIKE '%{query}%'")
+                where_clause = " OR ".join(where_conditions) if where_conditions else "1=0"
+            else:
+                where_clause = f"CAST({selected_column} AS VARCHAR) ILIKE '%{query}%'"
         
-        st.write(f"**Selected files ({len(selected_files)}):**")
-        for f in selected_files:
-            filename = os.path.basename(f).replace('.parquet', '')
-            st.write(f"• {filename}")
+        # Get total count with loading indicator
+        with st.spinner("Counting results..."):
+            count_query = f"""
+            SELECT COUNT(*) as total FROM {table_expr}
+            WHERE {where_clause}
+            """
+            total_rows = con.execute(count_query).fetchone()[0]
         
-        if query:
-            st.write(f"Searching in: **{len(selected_files)} files** | Column: **{selected_column}** | Query: `{query}`")
+        if total_rows == 0:
+            st.info("No results found.")
+        else:
+            # Initialize session state for pagination
+            if 'current_page' not in st.session_state:
+                st.session_state.current_page = 1
             
-            try:
-                if selected_column == "All columns":
-                    where_conditions = []
-                    for col_name in column_names:
-                        where_conditions.append(f"CAST({col_name} AS VARCHAR) ILIKE '%{query}%'")
-                    where_clause = " OR ".join(where_conditions) if where_conditions else "1=0"
-                else:
-                    where_clause = f"CAST({selected_column} AS VARCHAR) ILIKE '%{query}%'"
-                
-                # Get total count first
-                count_query = f"""
-                SELECT COUNT(*) as total FROM {table_expr}
-                WHERE {where_clause}
-                """
-                total_rows = con.execute(count_query).fetchone()[0]
-                
-                if total_rows == 0:
-                    st.info("No results found.")
-                else:
-                    # Initialize session state
-                    if 'current_page' not in st.session_state:
-                        st.session_state.current_page = 1
-                    
-                    # Calculate pagination
-                    total_pages = (total_rows + rows_per_page - 1) // rows_per_page
-                    
-                    # Ensure current page is within bounds
-                    if st.session_state.current_page > total_pages:
-                        st.session_state.current_page = total_pages
-                    if st.session_state.current_page < 1:
-                        st.session_state.current_page = 1
-                    
-                    col_left, col_center, col_right = st.columns([1, 2, 1])
-                    
-                    with col_left:
-                        if st.button("◀ Previous", disabled=st.session_state.current_page <= 1):
-                            st.session_state.current_page = max(1, st.session_state.current_page - 1)
-                            st.rerun()
-                    
-                    with col_center:
-                        current_page = st.number_input(
-                            f"Page (1-{total_pages}):",
-                            min_value=1,
-                            max_value=total_pages,
-                            value=st.session_state.current_page,
-                            key='page_input'
-                        )
-                        if current_page != st.session_state.current_page:
-                            st.session_state.current_page = current_page
-                            st.rerun()
-                        st.write(f"Showing {total_rows} total results")
-                    
-                    with col_right:
-                        if st.button("Next ▶", disabled=st.session_state.current_page >= total_pages):
-                            st.session_state.current_page = min(total_pages, st.session_state.current_page + 1)
-                            st.rerun()
-                    
-                    # Get paginated results
-                    offset = (st.session_state.current_page - 1) * rows_per_page
-                    
-                    duck_query = f"""
-                    SELECT * FROM {table_expr}
-                    WHERE {where_clause}
-                    ORDER BY _source_file
-                    LIMIT {rows_per_page} OFFSET {offset}
-                    """
-                    
-                    result = con.execute(duck_query).fetchdf()
-                    st.dataframe(result, use_container_width=True)
-                
-            except Exception as e:
-                st.error(f"Query failed: {e}")
+            # Calculate pagination
+            total_pages = (total_rows + rows_per_page - 1) // rows_per_page
+            
+            # Ensure current page is within bounds
+            if st.session_state.current_page > total_pages:
+                st.session_state.current_page = total_pages
+            if st.session_state.current_page < 1:
+                st.session_state.current_page = 1
+            
+            # Pagination controls
+            col_left, col_center, col_right = st.columns([1, 2, 1])
+            
+            with col_left:
+                if st.button("◀ Previous", disabled=st.session_state.current_page <= 1):
+                    st.session_state.current_page = max(1, st.session_state.current_page - 1)
+                    st.rerun()
+            
+            with col_center:
+                current_page = st.number_input(
+                    f"Page (1-{total_pages}):",
+                    min_value=1,
+                    max_value=total_pages,
+                    value=st.session_state.current_page,
+                    key='page_input'
+                )
+                if current_page != st.session_state.current_page:
+                    st.session_state.current_page = current_page
+                    st.rerun()
+                st.write(f"Showing {total_rows:,} total results")
+            
+            with col_right:
+                if st.button("Next ▶", disabled=st.session_state.current_page >= total_pages):
+                    st.session_state.current_page = min(total_pages, st.session_state.current_page + 1)
+                    st.rerun()
+            
+            # Get paginated results with loading indicator and timing
+            offset = (st.session_state.current_page - 1) * rows_per_page
+            
+            duck_query = f"""
+            SELECT * FROM {table_expr}
+            WHERE {where_clause}
+            ORDER BY _source_file
+            LIMIT {rows_per_page} OFFSET {offset}
+            """
+            
+            with st.spinner("Executing query..."):
+                start_time = time.time()
+                result = con.execute(duck_query).fetchdf()
+                query_time = time.time() - start_time
+            
+            # Display query execution time
+            st.caption(f"Query executed in {query_time:.3f} seconds")
+            
+            # Display results
+            st.dataframe(result, use_container_width=True)
+        
+    except Exception as e:
+        st.error(f"Query failed: {e}")
+        st.error("Please check your search query and try again.")
+
+else:
+    st.info("Enter a search term in the sidebar to begin searching.")

@@ -1,4 +1,4 @@
-# Argus
+# Argus 👁👁
 
 a simple web interface for tabular data.
 
