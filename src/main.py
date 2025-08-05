@@ -84,7 +84,7 @@ else:
     if not file_groups:
         st.error("No valid parquet files found.")
     else:
-        col1, col2, col3 = st.columns(3)
+        col1, col2, col3, col4 = st.columns(4)
         
         with col1:
             selected_group = st.selectbox(
@@ -100,7 +100,7 @@ else:
                 table_expr = create_union_query(selected_files)
                 columns_query = f"DESCRIBE SELECT * FROM {table_expr}"
                 columns_result = con.execute(columns_query).fetchall()
-                column_names = [col[0] for col in columns_result]
+                column_names = [col[0] for col in columns_result if col[0] != '_source_file']
                 
                 selected_column = st.selectbox(
                     "Column:",
@@ -113,6 +113,15 @@ else:
         
         with col3:
             query = st.text_input("Search for:", "")
+        
+        with col4:
+            rows_per_page = st.number_input(
+                "Rows per page:",
+                min_value=10,
+                max_value=1000,
+                value=100,
+                step=10
+            )
         
         st.write(f"**Selected files ({len(selected_files)}):**")
         for f in selected_files:
@@ -131,14 +140,52 @@ else:
                 else:
                     where_clause = f"CAST({selected_column} AS VARCHAR) ILIKE '%{query}%'"
                 
-                duck_query = f"""
-                SELECT * FROM {table_expr}
+                # Get total count first
+                count_query = f"""
+                SELECT COUNT(*) as total FROM {table_expr}
                 WHERE {where_clause}
-                LIMIT 100
                 """
+                total_rows = con.execute(count_query).fetchone()[0]
                 
-                result = con.execute(duck_query).fetchdf()
-                st.dataframe(result)
+                if total_rows == 0:
+                    st.info("No results found.")
+                else:
+                    # Calculate pagination
+                    total_pages = (total_rows + rows_per_page - 1) // rows_per_page
+                    
+                    col_left, col_center, col_right = st.columns([1, 2, 1])
+                    
+                    with col_left:
+                        if st.button("◀ Previous", disabled=st.session_state.get('current_page', 1) <= 1):
+                            st.session_state.current_page = max(1, st.session_state.get('current_page', 1) - 1)
+                    
+                    with col_center:
+                        current_page = st.number_input(
+                            f"Page (1-{total_pages}):",
+                            min_value=1,
+                            max_value=total_pages,
+                            value=st.session_state.get('current_page', 1),
+                            key='page_input'
+                        )
+                        st.session_state.current_page = current_page
+                        st.write(f"Showing {total_rows} total results")
+                    
+                    with col_right:
+                        if st.button("Next ▶", disabled=st.session_state.get('current_page', 1) >= total_pages):
+                            st.session_state.current_page = min(total_pages, st.session_state.get('current_page', 1) + 1)
+                    
+                    # Get paginated results
+                    offset = (st.session_state.get('current_page', 1) - 1) * rows_per_page
+                    
+                    duck_query = f"""
+                    SELECT * FROM {table_expr}
+                    WHERE {where_clause}
+                    ORDER BY _source_file
+                    LIMIT {rows_per_page} OFFSET {offset}
+                    """
+                    
+                    result = con.execute(duck_query).fetchdf()
+                    st.dataframe(result, use_container_width=True)
                 
             except Exception as e:
                 st.error(f"Query failed: {e}")
