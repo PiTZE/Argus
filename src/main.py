@@ -308,30 +308,43 @@ if query:
             if st.session_state.current_page < 1:
                 st.session_state.current_page = 1
             
-            # Pagination controls
-            col_left, col_center, col_right = st.columns([1, 2, 1])
+            # Results summary
+            st.write(f"**Found {total_rows:,} results** (Page {st.session_state.current_page} of {total_pages})")
             
-            with col_left:
-                if st.button("◀ Previous", disabled=st.session_state.current_page <= 1):
+            # Pagination controls with better layout
+            col1, col2, col3, col4, col5 = st.columns([1, 1, 2, 1, 1])
+            
+            with col1:
+                if st.button("⏮ First", disabled=st.session_state.current_page <= 1, use_container_width=True):
+                    st.session_state.current_page = 1
+                    st.rerun()
+            
+            with col2:
+                if st.button("◀ Prev", disabled=st.session_state.current_page <= 1, use_container_width=True):
                     st.session_state.current_page = max(1, st.session_state.current_page - 1)
                     st.rerun()
             
-            with col_center:
+            with col3:
                 current_page = st.number_input(
-                    f"Page (1-{total_pages}):",
+                    "Go to page:",
                     min_value=1,
                     max_value=total_pages,
                     value=st.session_state.current_page,
-                    key='page_input'
+                    key='page_input',
+                    help=f"Enter page number (1-{total_pages})"
                 )
                 if current_page != st.session_state.current_page:
                     st.session_state.current_page = current_page
                     st.rerun()
-                st.write(f"Showing {total_rows:,} total results")
             
-            with col_right:
-                if st.button("Next ▶", disabled=st.session_state.current_page >= total_pages):
+            with col4:
+                if st.button("Next ▶", disabled=st.session_state.current_page >= total_pages, use_container_width=True):
                     st.session_state.current_page = min(total_pages, st.session_state.current_page + 1)
+                    st.rerun()
+            
+            with col5:
+                if st.button("Last ⏭", disabled=st.session_state.current_page >= total_pages, use_container_width=True):
+                    st.session_state.current_page = total_pages
                     st.rerun()
             
             # Get paginated results with loading indicator and timing
