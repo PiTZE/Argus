@@ -4,8 +4,11 @@ from pathlib import Path
 
 def load_config():
     """Load configuration from config.yaml, fallback to config.yaml.example"""
-    config_path = Path("config.yaml")
-    example_path = Path("config.yaml.example")
+    # Get the directory where this script is located
+    script_dir = Path(__file__).parent
+    # Look for config files in the parent directory (project root)
+    config_path = script_dir.parent / "config.yaml"
+    example_path = script_dir.parent / "config.yaml.example"
     
     if config_path.exists():
         with open(config_path, 'r') as f:
