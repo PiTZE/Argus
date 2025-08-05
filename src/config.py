@@ -2,11 +2,13 @@ import yaml
 import os
 from pathlib import Path
 
+# ============================================================================
+# CONFIGURATION LOADING
+# ============================================================================
+
 def load_config():
     """Load configuration from config.yaml, fallback to config.yaml.example"""
-    # Get the directory where this script is located
     script_dir = Path(__file__).parent
-    # Look for config files in the parent directory (project root)
     config_path = script_dir.parent / "config.yaml"
     example_path = script_dir.parent / "config.yaml.example"
     
@@ -19,6 +21,10 @@ def load_config():
             return yaml.safe_load(f)
     else:
         raise FileNotFoundError("Neither config.yaml nor config.yaml.example found")
+
+# ============================================================================
+# DUCKDB CONFIGURATION
+# ============================================================================
 
 def configure_duckdb(con, config=None):
     """Apply DuckDB configuration settings"""
@@ -38,6 +44,10 @@ def configure_duckdb(con, config=None):
     
     if 'temp_directory' in duckdb_config:
         con.execute(f"SET temp_directory='{duckdb_config['temp_directory']}'")
+
+# ============================================================================
+# DIRECTORY AND OPTIONS UTILITIES
+# ============================================================================
 
 def get_directories(config=None):
     """Get directory paths from config"""

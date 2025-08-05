@@ -22,7 +22,6 @@ st.set_page_config(
 
 st.title("Argus 👁👁")
 
-# Initialize database connection
 con = duckdb.connect()
 configure_duckdb(con, config)
 
@@ -41,10 +40,8 @@ def get_file_schema(file_path):
 def get_file_stats(file_path):
     """Get basic statistics for a parquet file"""
     try:
-        # Get row count
         row_count = con.execute(f"SELECT COUNT(*) FROM read_parquet('{file_path}')").fetchone()[0]
         
-        # Get file size
         file_size = os.path.getsize(file_path)
         if file_size < 1024:
             size_str = f"{file_size} B"
@@ -53,7 +50,6 @@ def get_file_stats(file_path):
         else:
             size_str = f"{file_size / (1024 * 1024):.1f} MB"
         
-        # Get column count
         schema = get_file_schema(file_path)
         col_count = len(schema)
         
@@ -82,13 +78,10 @@ def group_files_by_schema(files):
                 break
         
         if group_name is None:
-            # Extract common name pattern from files
             filename = os.path.basename(file_path).replace('.parquet', '')
-            # Remove numbers and common suffixes to find base name
             import re
             base_name = re.sub(r'\d+$', '', filename).rstrip('_-')
             
-            # Check if this base name already exists
             existing_base_names = []
             for existing_group in groups.keys():
                 if not existing_group.startswith("Schema"):
@@ -123,7 +116,6 @@ def create_union_query(selected_files):
 # DATA LOADING AND PROCESSING
 # ============================================================================
 
-# Load parquet files with loading indicator
 with st.spinner("Loading parquet files..."):
     parquet_files = glob.glob(os.path.join(PARQUET_DIR, "*.parquet"))
 
@@ -131,7 +123,6 @@ if not parquet_files:
     st.error("No Parquet files found.")
     st.stop()
 
-# Group files by schema with loading indicator
 with st.spinner("Analyzing file schemas..."):
     file_groups = group_files_by_schema(parquet_files)
 
@@ -143,11 +134,9 @@ if not file_groups:
 # METRICS DASHBOARD
 # ============================================================================
 
-# Calculate total statistics
 total_files = len(parquet_files)
 total_groups = len(file_groups)
 
-# Calculate total rows and size
 with st.spinner("Calculating statistics..."):
     total_rows = 0
     total_size_bytes = 0
@@ -161,7 +150,6 @@ with st.spinner("Calculating statistics..."):
     
     progress_bar.empty()
 
-# Format total size
 if total_size_bytes < 1024 * 1024:
     total_size = f"{total_size_bytes / 1024:.1f} KB"
 elif total_size_bytes < 1024 * 1024 * 1024:
@@ -169,7 +157,6 @@ elif total_size_bytes < 1024 * 1024 * 1024:
 else:
     total_size = f"{total_size_bytes / (1024 * 1024 * 1024):.1f} GB"
 
-# Display metrics dashboard
 st.subheader("Data Overview")
 col1, col2, col3, col4 = st.columns(4)
 
@@ -194,7 +181,6 @@ st.divider()
 with st.sidebar:
     st.header("Search Controls")
     
-    # Schema group selection
     selected_group = st.selectbox(
         "Schema Group:",
         options=list(file_groups.keys()),
@@ -204,7 +190,6 @@ with st.sidebar:
     available_files = file_groups[selected_group]
     selected_files = available_files
     
-    # Column selection
     try:
         with st.spinner("Loading column information..."):
             table_expr = create_union_query(selected_files)
@@ -222,7 +207,6 @@ with st.sidebar:
         selected_column = "All columns"
         column_names = []
     
-    # Search form (responds to Enter key)
     with st.form("search_form"):
         query = st.text_input(
             "Search for:",
@@ -230,7 +214,6 @@ with st.sidebar:
             help="Search for text in the selected column(s)"
         )
         
-        # Search button (responds to Enter key press)
         search_clicked = st.form_submit_button(
             "Search",
             use_container_width=True,
@@ -238,7 +221,6 @@ with st.sidebar:
             type="primary"
         )
     
-    # Pagination settings
     st.subheader("Settings")
     rows_per_page = st.number_input(
         "Rows per page:",
@@ -249,10 +231,8 @@ with st.sidebar:
         help="Number of rows to display per page"
     )
     
-    # Cache management
     st.subheader("Cache")
     if st.button("Clear Cache", help="Clear cached results and refresh data"):
-        # Clear all cache-related session state
         for key in ['cached_results', 'cached_total_rows', 'cache_key']:
             if key in st.session_state:
                 del st.session_state[key]
@@ -260,7 +240,6 @@ with st.sidebar:
             st.session_state.current_page = 1
         st.rerun()
     
-    # Show cache status
     if 'cached_results' in st.session_state:
         cache_size = len(st.session_state.cached_results)
         st.caption(f"Cached: {cache_size:,} results")
@@ -271,7 +250,6 @@ with st.sidebar:
 
 st.subheader(f"Selected Files ({len(selected_files)})")
 
-# Display file information in an expandable section
 with st.expander("View file details", expanded=False):
     for file_path in selected_files:
         filename = os.path.basename(file_path).replace('.parquet', '')
@@ -294,15 +272,12 @@ with st.expander("View file details", expanded=False):
 if query and search_clicked:
     st.subheader("Search Results")
     
-    # Display search information
     search_info = f"Searching in **{len(selected_files)} files** | Column: **{selected_column}** | Query: `{query}`"
     st.info(search_info)
     
     try:
-        # Create cache key from search parameters
         cache_key = f"{selected_group}_{selected_column}_{query}_{len(selected_files)}"
         
-        # Check if we need to invalidate cache
         cache_invalid = (
             'cache_key' not in st.session_state or
             st.session_state.cache_key != cache_key or
@@ -310,14 +285,12 @@ if query and search_clicked:
         )
         
         if cache_invalid:
-            # Clear old cache and reset pagination
             for key in ['cached_results', 'cached_total_rows']:
                 if key in st.session_state:
                     del st.session_state[key]
             st.session_state.cache_key = cache_key
             st.session_state.current_page = 1
             
-            # Build where clause
             with st.spinner("Building search query..."):
                 if selected_column == "All columns":
                     where_conditions = []
@@ -327,7 +300,6 @@ if query and search_clicked:
                 else:
                     where_clause = f"CAST({selected_column} AS VARCHAR) ILIKE '%{query}%'"
             
-            # Execute full query and cache results
             full_query = f"""
             SELECT * FROM {table_expr}
             WHERE {where_clause}
@@ -339,38 +311,31 @@ if query and search_clicked:
                 cached_results = con.execute(full_query).fetchdf()
                 query_time = time.time() - start_time
                 
-                # Store in session state
                 st.session_state.cached_results = cached_results
                 st.session_state.cached_total_rows = len(cached_results)
                 st.session_state.query_time = query_time
             
             st.success(f"Query executed and cached in {query_time:.3f} seconds")
         
-        # Get cached results
         cached_results = st.session_state.cached_results
         total_rows = st.session_state.cached_total_rows
         
         if total_rows == 0:
             st.info("No results found.")
         else:
-            # Initialize session state for pagination
             if 'current_page' not in st.session_state:
                 st.session_state.current_page = 1
             
-            # Calculate pagination
             total_pages = (total_rows + rows_per_page - 1) // rows_per_page
             
-            # Ensure current page is within bounds
             if st.session_state.current_page > total_pages:
                 st.session_state.current_page = total_pages
             if st.session_state.current_page < 1:
                 st.session_state.current_page = 1
             
-            # Results summary with cache info
             cache_indicator = "Cached" if not cache_invalid else "Nope"
             st.write(f"**Found {total_rows:,} results** (Page {st.session_state.current_page} of {total_pages}) {cache_indicator}")
             
-            # Pagination controls with better layout
             col1, col2, col3, col4, col5 = st.columns([1, 1, 2, 1, 1])
             
             with col1:
@@ -406,22 +371,18 @@ if query and search_clicked:
                     st.session_state.current_page = total_pages
                     st.rerun()
             
-            # Get paginated results from cache (instant!)
             start_idx = (st.session_state.current_page - 1) * rows_per_page
             end_idx = start_idx + rows_per_page
             paginated_results = cached_results.iloc[start_idx:end_idx]
             
-            # Display performance info
             if hasattr(st.session_state, 'query_time'):
                 if cache_invalid:
                     st.caption(f"⚡ Initial query: {st.session_state.query_time:.3f}s | Pagination: instant (cached)")
                 else:
                     st.caption(f"⚡ Pagination: instant (using cached results from {st.session_state.query_time:.3f}s query)")
             
-            # Display results
             st.dataframe(paginated_results, use_container_width=True)
             
-            # Memory usage warning for large result sets
             if total_rows > 50000:
                 st.warning(f"Large result set ({total_rows:,} rows) cached in memory. Consider refining your search for better performance.")
         

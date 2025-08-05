@@ -8,14 +8,20 @@ from pathlib import Path
 from datetime import datetime
 from config import load_config, configure_duckdb, get_directories, get_csv_options
 
-# Colors for console output
+# ============================================================================
+# CONFIGURATION AND CONSTANTS
+# ============================================================================
+
 RED = '\033[0;31m'
 GREEN = '\033[0;32m'
 YELLOW = '\033[1;33m'
 BLUE = '\033[0;34m'
-NC = '\033[0m'  # No Color
+NC = '\033[0m'
 
-# Colored logging functions
+# ============================================================================
+# LOGGING FUNCTIONS
+# ============================================================================
+
 def log_info(message):
     print(f"{BLUE}[INFO]{NC} {message}")
 
@@ -27,6 +33,10 @@ def log_warning(message):
 
 def log_error(message):
     print(f"{RED}[ERROR]{NC} {message}")
+
+# ============================================================================
+# UTILITY FUNCTIONS
+# ============================================================================
 
 def setup_logging(config):
     dirs = get_directories(config)
@@ -49,7 +59,6 @@ def setup_logging(config):
     file_handler.setLevel(getattr(logging, file_level))
     file_handler.setFormatter(formatter)
     
-    # Only file logging - console output will use colored functions
     logger = logging.getLogger('csv_to_parq')
     logger.setLevel(logging.DEBUG)
     logger.addHandler(file_handler)
@@ -82,6 +91,10 @@ def log_system_info(logger):
         warning_msg = f"Could not get system info: {e}"
         log_warning(warning_msg)
         logger.warning(warning_msg)
+
+# ============================================================================
+# DATA PROCESSING
+# ============================================================================
 
 def clean_and_convert(csv_path, parquet_path, logger, file_index, total_files, config):
     start_time = time.time()
@@ -203,23 +216,24 @@ def clean_and_convert(csv_path, parquet_path, logger, file_index, total_files, c
     log_success(complete_file_msg)
     logger.info(complete_file_msg)
     
-    # Force garbage collection to free memory
     import gc
     gc.collect()
     
     return True
+
+# ============================================================================
+# MAIN EXECUTION
+# ============================================================================
 
 def main():
     config = load_config()
     logger, log_file = setup_logging(config)
     
     try:
-        # Header with colored output
         print("=" * 60)
         log_info("CSV to Parquet Converter Started")
         print("=" * 60)
         
-        # Log to file
         logger.info("=" * 60)
         logger.info("CSV to Parquet Converter Started")
         logger.info("=" * 60)
@@ -327,12 +341,10 @@ def main():
         
         total_time = time.time() - total_start_time
         
-        # Final summary with colored output
         print("=" * 60)
         log_success("PROCESSING COMPLETE")
         print("=" * 60)
         
-        # Log to file
         logger.info("=" * 60)
         logger.info("PROCESSING COMPLETE")
         logger.info("=" * 60)

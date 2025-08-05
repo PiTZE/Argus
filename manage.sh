@@ -2,7 +2,10 @@
 
 set -e
 
-# Variables
+# ============================================================================
+# VARIABLES AND CONFIGURATION
+# ============================================================================
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 VENV_DIR="$SCRIPT_DIR/.venv"
 PID_FILE="$SCRIPT_DIR/argus.pid"
@@ -12,19 +15,20 @@ REQUIREMENTS_FILE="$SCRIPT_DIR/requirements.txt"
 MAIN_SCRIPT="$SCRIPT_DIR/src/main.py"
 CSV_PROCESSOR="$SCRIPT_DIR/src/csv_to_parq.py"
 
-# Service variables
 SERVICE_NAME="argus"
 SERVICE_FILE_USER="$HOME/.config/systemd/user/$SERVICE_NAME.service"
 SERVICE_FILE_SYSTEM="/etc/systemd/system/$SERVICE_NAME.service"
 
-# Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m'
 
-# Logging functions
+# ============================================================================
+# LOGGING FUNCTIONS
+# ============================================================================
+
 log_info() {
     echo -e "${BLUE}[INFO]${NC} $1"
 }
@@ -41,8 +45,12 @@ log_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
-# Helper functions
+# ============================================================================
+# HELPER FUNCTIONS
+# ============================================================================
+
 check_venv() {
+    # Check if virtual environment exists and exit if not found
     if [ ! -d "$VENV_DIR" ]; then
         log_error "Virtual environment not found"
         log_error "Run './manage.sh install' first"
@@ -51,11 +59,17 @@ check_venv() {
 }
 
 activate_venv() {
+    # Activate the virtual environment after checking it exists
     check_venv
     source "$VENV_DIR/bin/activate"
 }
 
+# ============================================================================
+# APPLICATION MANAGEMENT
+# ============================================================================
+
 install_app() {
+    # Setup virtual environment and dependencies
     log_info "Installing Argus..."
     
     if ! command -v python3 &> /dev/null; then
@@ -97,6 +111,7 @@ install_app() {
 }
 
 start_app() {
+    # Start the Argus web interface
     log_info "Starting Argus..."
     
     activate_venv
@@ -145,6 +160,7 @@ start_app() {
 }
 
 stop_app() {
+    # Stop the running Argus web interface
     log_info "Stopping Argus..."
     
     if [ ! -f "$PID_FILE" ]; then
@@ -179,6 +195,7 @@ stop_app() {
 }
 
 process_data() {
+    # Convert CSV files to Parquet format
     log_info "Processing CSV data..."
     
     activate_venv
@@ -199,8 +216,12 @@ process_data() {
     fi
 }
 
-# Service management functions
+# ============================================================================
+# SERVICE MANAGEMENT FUNCTIONS
+# ============================================================================
+
 create_service_file() {
+    # Create systemd service file with provided configuration
     local service_file="$1"
     local service_type="$2"
     
@@ -229,20 +250,18 @@ EOF
 }
 
 install_service() {
+    # Install and configure systemd service
     log_info "Installing Argus service..."
     
-    # Check if systemd is available
     if ! command -v systemctl &> /dev/null; then
         log_error "systemctl not found. This system doesn't support systemd services."
         exit 1
     fi
     
-    # Determine service type based on user privileges
     local use_user_service=true
     local service_file="$SERVICE_FILE_USER"
     local systemctl_cmd="systemctl --user"
     
-    # Check if we should install as system service
     if [[ "$1" == "--system" ]]; then
         if [[ $EUID -ne 0 ]]; then
             log_error "System service installation requires root privileges"
@@ -254,23 +273,19 @@ install_service() {
         systemctl_cmd="systemctl"
     fi
     
-    # Create service directory if needed
     if [[ "$use_user_service" == true ]]; then
         mkdir -p "$(dirname "$SERVICE_FILE_USER")"
     fi
     
-    # Check if service already exists
     if [[ -f "$service_file" ]]; then
         log_warning "Service file already exists: $service_file"
         log_info "Use 'service --remove' first to reinstall"
         exit 1
     fi
     
-    # Create service file
     log_info "Creating service file: $service_file"
     create_service_file "$service_file" "$use_user_service"
     
-    # Reload systemd and enable service
     log_info "Reloading systemd daemon..."
     $systemctl_cmd daemon-reload
     
@@ -280,7 +295,6 @@ install_service() {
     log_info "Starting service..."
     $systemctl_cmd start "$SERVICE_NAME"
     
-    # Wait a moment and check status
     sleep 2
     if $systemctl_cmd is-active --quiet "$SERVICE_NAME"; then
         log_success "Service installed and started successfully"
@@ -299,6 +313,7 @@ install_service() {
 }
 
 remove_service() {
+    # Remove and cleanup systemd service
     log_info "Removing Argus service..."
     
     if ! command -v systemctl &> /dev/null; then
@@ -310,7 +325,6 @@ remove_service() {
     local systemctl_cmd=""
     local service_exists=false
     
-    # Check which type of service exists
     if [[ -f "$SERVICE_FILE_USER" ]]; then
         service_file="$SERVICE_FILE_USER"
         systemctl_cmd="systemctl --user"
@@ -332,18 +346,15 @@ remove_service() {
         exit 0
     fi
     
-    # Stop and disable service
     log_info "Stopping service..."
     $systemctl_cmd stop "$SERVICE_NAME" 2>/dev/null || true
     
     log_info "Disabling service..."
     $systemctl_cmd disable "$SERVICE_NAME" 2>/dev/null || true
     
-    # Remove service file
     log_info "Removing service file: $service_file"
     rm -f "$service_file"
     
-    # Reload systemd
     log_info "Reloading systemd daemon..."
     $systemctl_cmd daemon-reload
     
@@ -351,6 +362,7 @@ remove_service() {
 }
 
 start_service() {
+    # Start the systemd service
     log_info "Starting Argus service..."
     
     if ! command -v systemctl &> /dev/null; then
@@ -360,7 +372,6 @@ start_service() {
     
     local systemctl_cmd=""
     
-    # Determine which service type is installed
     if [[ -f "$SERVICE_FILE_USER" ]]; then
         systemctl_cmd="systemctl --user"
     elif [[ -f "$SERVICE_FILE_SYSTEM" ]]; then
@@ -371,11 +382,9 @@ start_service() {
         exit 1
     fi
     
-    # Enable and start service
     $systemctl_cmd enable "$SERVICE_NAME"
     $systemctl_cmd start "$SERVICE_NAME"
     
-    # Check status
     sleep 2
     if $systemctl_cmd is-active --quiet "$SERVICE_NAME"; then
         log_success "Service started successfully"
@@ -387,6 +396,7 @@ start_service() {
 }
 
 stop_service() {
+    # Stop the systemd service
     log_info "Stopping Argus service..."
     
     if ! command -v systemctl &> /dev/null; then
@@ -396,7 +406,6 @@ stop_service() {
     
     local systemctl_cmd=""
     
-    # Determine which service type is installed
     if [[ -f "$SERVICE_FILE_USER" ]]; then
         systemctl_cmd="systemctl --user"
     elif [[ -f "$SERVICE_FILE_SYSTEM" ]]; then
@@ -406,7 +415,6 @@ stop_service() {
         exit 1
     fi
     
-    # Stop and disable service
     $systemctl_cmd stop "$SERVICE_NAME"
     $systemctl_cmd disable "$SERVICE_NAME"
     
@@ -414,6 +422,7 @@ stop_service() {
 }
 
 status_service() {
+    # Show systemd service status
     if ! command -v systemctl &> /dev/null; then
         log_error "systemctl not found. This system doesn't support systemd services."
         exit 1
@@ -421,7 +430,6 @@ status_service() {
     
     local systemctl_cmd=""
     
-    # Determine which service type is installed
     if [[ -f "$SERVICE_FILE_USER" ]]; then
         systemctl_cmd="systemctl --user"
         log_info "Service type: User service"
@@ -437,6 +445,7 @@ status_service() {
 }
 
 logs_service() {
+    # Display systemd service logs
     if ! command -v journalctl &> /dev/null; then
         log_error "journalctl not found. Cannot view service logs."
         exit 1
@@ -444,7 +453,6 @@ logs_service() {
     
     local journalctl_cmd=""
     
-    # Determine which service type is installed
     if [[ -f "$SERVICE_FILE_USER" ]]; then
         journalctl_cmd="journalctl --user"
     elif [[ -f "$SERVICE_FILE_SYSTEM" ]]; then
@@ -459,6 +467,7 @@ logs_service() {
 }
 
 show_help() {
+    # Display usage information and available commands
     echo "Usage: $0 [install|start|stop|process-data|service|help]"
     echo ""
     echo "Commands:"
@@ -489,7 +498,10 @@ show_help() {
     echo "Note: Run 'install' first before using other commands"
 }
 
-# Main script logic
+# ============================================================================
+# MAIN SCRIPT LOGIC
+# ============================================================================
+
 case "${1:-help}" in
     install)
         install_app
