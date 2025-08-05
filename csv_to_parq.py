@@ -6,7 +6,7 @@ import logging
 import psutil
 from pathlib import Path
 from datetime import datetime
-from config import load_config, configure_duckdb, get_directories
+from config import load_config, configure_duckdb, get_directories, get_csv_options
 
 def setup_logging(config):
     dirs = get_directories(config)
@@ -73,10 +73,12 @@ def clean_and_convert(csv_path, parquet_path, logger, file_index, total_files, c
             configure_duckdb(con, config)
             
             logger.info("Step 1/3: Analyzing column structure...")
+            csv_options = get_csv_options(config)
             col_query = f"""
             SELECT * FROM read_csv_auto('{csv_path}',
                 sample_size=1,
-                all_varchar=true
+                all_varchar=true,
+                {csv_options}
             )
             """
             col_result = con.execute(col_query)
@@ -118,9 +120,7 @@ def clean_and_convert(csv_path, parquet_path, logger, file_index, total_files, c
             COPY (
                 SELECT {select_clause}
                 FROM read_csv_auto('{csv_path}',
-                    ignore_errors=true,
-                    sample_size=-1,
-                    all_varchar=true
+                    {csv_options}
                 )
             ) TO '{parquet_path}' (FORMAT PARQUET, COMPRESSION GZIP)
             """

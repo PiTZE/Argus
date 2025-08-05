@@ -47,3 +47,28 @@ def get_directories(config=None):
         'output_dir': dirs.get('output_dir', 'data/parq'),
         'log_dir': dirs.get('log_dir', 'logs')
     }
+
+def get_csv_options(config=None):
+    """Get CSV parsing options from config"""
+    if config is None:
+        config = load_config()
+    
+    csv_config = config.get('csv_parsing', {})
+    options = []
+    
+    if 'strict_mode' in csv_config:
+        options.append(f"strict_mode={str(csv_config['strict_mode']).lower()}")
+    
+    if 'ignore_errors' in csv_config:
+        options.append(f"ignore_errors={str(csv_config['ignore_errors']).lower()}")
+    
+    if 'null_padding' in csv_config:
+        options.append(f"null_padding={str(csv_config['null_padding']).lower()}")
+    
+    if 'sample_size' in csv_config:
+        options.append(f"sample_size={csv_config['sample_size']}")
+    
+    if 'all_varchar' in csv_config:
+        options.append(f"all_varchar={str(csv_config['all_varchar']).lower()}")
+    
+    return ", ".join(options)

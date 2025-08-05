@@ -25,3 +25,11 @@ processing:
   enable_row_count: false
   enable_memory_monitoring: false
   sort_files_by_size: true
+
+# CSV parsing settings
+csv_parsing:
+  strict_mode: false
+  ignore_errors: true
+  null_padding: true
+  sample_size: -1
+  all_varchar: true
