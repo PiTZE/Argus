@@ -39,7 +39,23 @@ def group_files_by_schema(files):
                 break
         
         if group_name is None:
-            group_name = f"Schema {len(groups) + 1} ({len(schema)} columns)"
+            # Extract common name pattern from files
+            filename = os.path.basename(file_path).replace('.parquet', '')
+            # Remove numbers and common suffixes to find base name
+            import re
+            base_name = re.sub(r'\d+$', '', filename).rstrip('_-')
+            
+            # Check if this base name already exists
+            existing_base_names = []
+            for existing_group in groups.keys():
+                if not existing_group.startswith("Schema"):
+                    existing_base_names.append(existing_group)
+            
+            if base_name and base_name not in existing_base_names:
+                group_name = base_name
+            else:
+                group_name = f"Schema {len(groups) + 1} ({len(schema)} columns)"
+            
             groups[group_name] = []
         
         groups[group_name].append(file_path)
@@ -47,14 +63,16 @@ def group_files_by_schema(files):
     return groups
 
 def create_union_query(selected_files):
-    """Create UNION ALL query with proper aliases"""
+    """Create UNION ALL query with proper aliases and source file column"""
     if len(selected_files) == 1:
-        return f"read_parquet('{selected_files[0]}')"
+        filename = os.path.basename(selected_files[0]).replace('.parquet', '')
+        return f"SELECT *, '{filename}' AS _source_file FROM read_parquet('{selected_files[0]}')"
     
     union_parts = []
     for i, file_path in enumerate(selected_files):
         alias = f"t{i}"
-        union_parts.append(f"SELECT * FROM read_parquet('{file_path}') AS {alias}")
+        filename = os.path.basename(file_path).replace('.parquet', '')
+        union_parts.append(f"SELECT *, '{filename}' AS _source_file FROM read_parquet('{file_path}') AS {alias}")
     
     return f"({' UNION ALL '.join(union_parts)})"
 
@@ -66,7 +84,7 @@ else:
     if not file_groups:
         st.error("No valid parquet files found.")
     else:
-        col1, col2, col3, col4 = st.columns(4)
+        col1, col2, col3 = st.columns(3)
         
         with col1:
             selected_group = st.selectbox(
@@ -74,18 +92,10 @@ else:
                 options=list(file_groups.keys())
             )
         
+        available_files = file_groups[selected_group]
+        selected_files = available_files
+        
         with col2:
-            available_files = file_groups[selected_group]
-            max_files = st.slider(
-                "Files to use:",
-                min_value=1,
-                max_value=len(available_files),
-                value=min(3, len(available_files))
-            )
-        
-        selected_files = available_files[:max_files]
-        
-        with col3:
             try:
                 table_expr = create_union_query(selected_files)
                 columns_query = f"DESCRIBE SELECT * FROM {table_expr}"
@@ -101,7 +111,7 @@ else:
                 selected_column = "All columns"
                 column_names = []
         
-        with col4:
+        with col3:
             query = st.text_input("Search for:", "")
         
         st.write(f"**Selected files ({len(selected_files)}):**")
