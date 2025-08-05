@@ -8,6 +8,10 @@ PARQUET_DIR = "data/parq"
 st.title("Argus 👁👁")
 
 con = duckdb.connect()
+con.execute("SET memory_limit='256MB'")
+con.execute("SET threads=1")
+con.execute("SET max_memory='256MB'")
+con.execute("SET temp_directory='/tmp'")
 parquet_files = glob.glob(os.path.join(PARQUET_DIR, "*.parquet"))
 
 if not parquet_files:
