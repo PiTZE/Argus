@@ -39,3 +39,6 @@ config.yaml
 # Data and logs
 data/
 logs/
+
+# Process files
+argus.pid
