@@ -430,6 +430,6 @@ if query and search_clicked:
 
 else:
     if query.strip():
-        st.info("Click the 🔍 Search button to execute your search.")
+        st.info("Click the Search button to execute your search.")
     else:
         st.info("Enter a search term in the sidebar and click the Search button to begin searching.")
