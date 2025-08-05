@@ -4,7 +4,7 @@ a simple web interface for tabular data.
 
 ## Setup
 ```bash
-git clone https://github.com/PiTZE/Argus.git
+git clone https://github.com/PiTZE/Argus.git && cd Argus
 ```
 
 Clone the repo
@@ -13,7 +13,7 @@ Clone the repo
 ./manage.sh install
 ```
 
-This creates a virtual environment, installs dependencies, and copies the config file.
+This creates a virtual environment, installs dependencies, and copies the config file. (Needs python and pip to work)
 
 ## Usage
 
@@ -21,7 +21,7 @@ This creates a virtual environment, installs dependencies, and copies the config
 ```bash
 ./manage.sh start
 ```
-Access at http://localhost:8501
+Access at http://localhost:8501 or http://your-server-ip:8501 (if port 8501 is taken by something else it choose 8502 and so on)
 
 ### Convert CSV files
 ```bash
